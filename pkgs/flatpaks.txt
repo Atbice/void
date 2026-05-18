@@ -1,0 +1,57 @@
+# Flatpak app IDs carried over from your Bazzite install.
+# bootstrap.sh --flatpaks installs these from Flathub.
+# NOTE: several org.kde.* apps also ship natively with kde5-baseapps —
+# trim those if you prefer native. Kept here for exact Bazzite parity.
+
+# Browsers
+com.google.Chrome
+org.mozilla.firefox
+
+# Comms
+dev.vencord.Vesktop
+im.riot.Riot
+
+# Notes / writing
+md.obsidian.Obsidian
+org.kde.ghostwriter
+
+# Gaming / Wine
+com.usebottles.bottles
+net.davidotek.pupgui2
+com.github.Matoking.protontricks
+io.github.Faugus.faugus-launcher
+io.github.fastrizwaan.WineZGUI
+org.winehq.Wine
+org.prismlauncher.PrismLauncher
+org.vinegarhq.Sober
+
+# Containers/distrobox GUIs
+com.ranfdev.DistroShelf
+io.github.dvlv.boxbuddyrs
+
+# Creative / media
+org.blender.Blender
+io.mpv.Mpv
+org.kde.haruna
+org.kde.gwenview
+de.leopoldluley.Clapgrep
+net.codelogistics.clicker
+
+# Utilities
+com.github.tchx84.Flatseal
+io.github.flattool.Warehouse
+it.mijorus.gearlever
+io.github.peazip.PeaZip
+io.gitlab.adhami3310.Impression
+org.fedoraproject.MediaWriter
+org.kde.filelight
+org.kde.kcalc
+org.kde.kolourpaint
+org.kde.okular
+org.kde.ktorrent
+org.sqlitebrowser.sqlitebrowser
+
+# Add for exact VS Code (MS build) parity instead of native `vscode`:
+# com.visualstudio.code
+# Heroic (not in xbps):
+# com.heroicgameslauncher.hgl

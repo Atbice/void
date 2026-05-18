@@ -1,0 +1,4 @@
+# NVIDIA RTX 3090 (Ampere → current `nvidia` branch, DKMS).
+# Requires void-repo-nonfree + void-repo-multilib-nonfree (bootstrap.sh adds them).
+nvidia
+nvidia-libs-32bit

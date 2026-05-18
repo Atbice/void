@@ -1,0 +1,25 @@
+# Dev workstation. See docs/04-dev.md for per-language rationale.
+base-devel
+clang
+lld
+gdb
+cmake
+meson
+ninja
+pkg-config
+rustup
+go
+uv
+nodejs
+docker
+docker-compose
+podman
+fuse-overlayfs
+slirp4netns
+distrobox
+flatpak
+fish-shell
+vscode
+openjdk21
+neovim
+helix

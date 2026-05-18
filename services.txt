@@ -1,0 +1,9 @@
+# runit services auto-enabled by bootstrap.sh
+# (symlinked /etc/sv/<name> -> /var/service/, idempotently).
+dbus
+elogind
+NetworkManager
+chronyd
+sddm
+# Per-need — NOT auto-enabled (uncomment to opt in, or enable by hand):
+# docker

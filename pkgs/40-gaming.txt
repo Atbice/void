@@ -1,0 +1,22 @@
+# Gaming stack. Requires multilib + multilib-nonfree repos.
+steam
+lutris
+wine
+wine-32bit
+winetricks
+dxvk
+vkd3d
+gamescope
+MangoHud
+MangoHud-32bit
+vkBasalt
+vkBasalt-32bit
+gamemode
+# Steam 32-bit runtime deps (Void steam README.voidlinux)
+libgcc-32bit
+libstdc++-32bit
+libdrm-32bit
+libglvnd-32bit
+libva-32bit
+# Xbox Bluetooth controller (DKMS) — uncomment if you use one:
+# xpadneo

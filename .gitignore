@@ -1,0 +1,7 @@
+# Generated on the live Void box (docs/05), not source-of-truth
+pkgs/installed.txt
+
+# editor / OS cruft
+*.swp
+*~
+.DS_Store

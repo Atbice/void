@@ -1,0 +1,20 @@
+# KDE Plasma 6 desktop + fonts + portals.
+#
+# ⚠️ VERIFY the KDE metapackage names against the handbook BEFORE install:
+#    https://docs.voidlinux.org/config/graphical-session/kde.html
+#    Historically `kde5` / `kde5-baseapps` INSTALL Plasma 6 on Void.
+#    Some third-party docs say `kde-plasma` / `kde-baseapps`. Pick whatever the
+#    handbook says at install time and fix these two lines.
+xorg-minimal
+xorg-fonts
+kde5
+kde5-baseapps
+sddm
+xdg-desktop-portal
+xdg-desktop-portal-kde
+xdg-user-dirs
+noto-fonts-ttf
+noto-fonts-emoji
+noto-fonts-cjk
+dejavu-fonts-ttf
+liberation-fonts-ttf

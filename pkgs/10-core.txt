@@ -1,0 +1,32 @@
+# Core CLI + base system (glibc). Repos are added by bootstrap.sh, not here.
+# One package per line. '#' comments and blank lines ignored.
+curl
+wget
+git
+rsync
+htop
+btop
+fastfetch
+ripgrep
+fd
+fzf
+bat
+eza
+jq
+tmux
+neovim
+unzip
+zip
+p7zip
+tree
+man-pages
+chrony
+NetworkManager
+network-manager-applet
+dbus
+elogind
+pipewire
+wireplumber
+chezmoi
+mosh
+netbird
