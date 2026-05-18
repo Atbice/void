@@ -1,9 +1,8 @@
-# runit services auto-enabled by bootstrap.sh
-# (symlinked /etc/sv/<name> -> /var/service/, idempotently).
+# runit services auto-enabled by bootstrap.sh (symlink /etc/sv/<n> -> /var/service/).
+# Order matters: dbus first, sddm last.
 dbus
-elogind
 NetworkManager
-chronyd
 sddm
-# Per-need — NOT auto-enabled (uncomment to opt in, or enable by hand):
-# docker
+# elogind: on current Void it is usually dbus/socket-activated with NO standalone
+# /etc/sv/elogind. bootstrap.sh enables it ONLY if that service dir exists.
+elogind

@@ -1,22 +1,10 @@
-# Gaming stack. Requires multilib + multilib-nonfree repos.
+# Lean gaming, no Flatpak. Proton (bundled with Steam) covers DXVK/VKD3D.
+# Lutris pulls Wine + deps via xbps. nvidia-libs-32bit is in 30-nvidia.txt.
 steam
 lutris
-wine
-wine-32bit
-winetricks
-dxvk
-vkd3d
-gamescope
-MangoHud
-MangoHud-32bit
-vkBasalt
-vkBasalt-32bit
-gamemode
-# Steam 32-bit runtime deps (Void steam README.voidlinux)
+mono
 libgcc-32bit
 libstdc++-32bit
 libdrm-32bit
 libglvnd-32bit
 libva-32bit
-# Xbox Bluetooth controller (DKMS) — uncomment if you use one:
-# xpadneo

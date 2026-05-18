@@ -1,20 +1,18 @@
-# KDE Plasma 6 desktop + fonts + portals.
-#
-# ⚠️ VERIFY the KDE metapackage names against the handbook BEFORE install:
-#    https://docs.voidlinux.org/config/graphical-session/kde.html
-#    Historically `kde5` / `kde5-baseapps` INSTALL Plasma 6 on Void.
-#    Some third-party docs say `kde-plasma` / `kde-baseapps`. Pick whatever the
-#    handbook says at install time and fix these two lines.
-xorg-minimal
-xorg-fonts
-kde5
-kde5-baseapps
+# Lean KDE Plasma 6 (Wayland). `kde-plasma` is the CURRENT metapackage
+# (kde5 no longer exists). We deliberately DO NOT install kde-baseapps /
+# kde-applications — that is the lean win. konsole + dolphin added by hand.
+kde-plasma
 sddm
-xdg-desktop-portal
-xdg-desktop-portal-kde
-xdg-user-dirs
+konsole
+dolphin
+xorg-minimal
+NetworkManager
+pipewire
+wireplumber
+libspa-bluetooth
+elogind
+dbus
+polkit
 noto-fonts-ttf
 noto-fonts-emoji
-noto-fonts-cjk
 dejavu-fonts-ttf
-liberation-fonts-ttf

@@ -1,77 +1,73 @@
-# Void Linux provisioning — gaming + dev daily driver (from Bazzite)
+# Void Linux — lean gaming box (Steam + games, instant)
 
-A reproducible "configs before install" repo for a clean Void Linux install on a
-**separate disk**, alongside an existing **Bazzite Kinoite** install, on a
-**Ryzen 9 5900X + RTX 3090** box.
+A **minimal, clean, efficient** Void Linux install whose only job is: boot into
+KDE Plasma 6 (Wayland), run **Steam**, and play games — with the **RTX 3090**
+driver correct and **zero Flatpak**. Dual-booted on a separate disk; Bazzite
+stays untouched.
 
-> **Short answer to "can I set it up with configs before?"**
-> Yes — but not the NixOS way. Void has no declarative installer. The realistic,
-> community-standard approach (and what this repo is) is: do a normal Void install,
-> then run a versioned **package list + idempotent provisioning script + dotfiles**.
-> You prepare all of that *now*, commit it to git, and a fresh box is ~one script away.
+> This repo was originally a full Bazzite-replica (dev + gaming daily driver).
+> It has been **trimmed to the lean gaming scope**. The dev stack and all
+> Flatpak tooling were removed. `docs/01` (dual-boot) and `docs/05`
+> (maintenance) are unchanged and still apply.
 
-## The honest picture (Bazzite → Void)
-
-You are trading an image-based, atomic, auto-tuned distro for a minimal,
-mutable, rolling one with **runit instead of systemd** and **xbps instead of
-rpm-ostree/flatpak-first**. Decisions already made for you here, with reasons:
+## Locked decisions (this scope)
 
 | Decision | Choice | Why |
 |---|---|---|
-| libc flavor | **glibc** (not musl) | NVIDIA proprietary driver and Steam are glibc-only. Non-negotiable for this box. |
-| Display server | **Wayland** (X11 kept as fallback) | Plasma 6.1+ + NVIDIA 595 + explicit-sync is the mainstream path in 2026; matches your Bazzite experience. |
-| Driver | `nvidia` package (DKMS) | RTX 3090 = Ampere → current branch. Ships NVIDIA's open GSP module; rebuilt by DKMS + xbps triggers on kernel updates. |
-| Dual-boot | **Separate ESP per disk + firmware boot menu** | Bazzite's `bootupd` atomically owns disk 1's ESP. Sharing it or chainloading ostree via os-prober *will* break. Disconnect disk 1 during Void install. |
-| Dotfiles | **chezmoi** | Templating + per-host + one-line `chezmoi init --apply`. Beats stow/bare-git for this. |
-| Root filesystem | **Btrfs** (choose at install) | Your only rollback safety net — Void has no atomic rollback. Snapshot before big updates. |
+| Desktop | **KDE Plasma 6, Wayland** | You chose it; in 2026 it's the best NVIDIA-Wayland path, VRR+HDR exposed in GUI. |
+| KDE size | **`kde-plasma` only** (no `kde-baseapps`) + konsole + dolphin | `kde5` no longer exists. `kde-plasma` already bundles plasma-nm/pa, bluedevil, portal, powerdevil, polkit agent. Skipping the apps meta is the lean win. |
+| Driver | `nvidia` (DKMS) + `nvidia-libs-32bit` | RTX 3090 = Ampere → current branch. 32-bit libs are mandatory or games won't launch. |
+| Flatpak | **None** | Your call. Everything below is native xbps. |
+| Steam | **native `steam`** | No Flatpak. Requires the Void Steam-Runtime fixes (now mandatory — baked into `bootstrap.sh`). |
+| Game launcher | **native `lutris`** (Faugus = optional `faugus.sh`) | Lutris is one xbps command, upgrade-safe, and does everything Faugus does (per-game Proton prefixes + GE-Proton downloader). Faugus-without-Flatpak is a fragile source build — opt-in only. |
+| Install | Separate disk, Bazzite untouched (`docs/01`) | Unchanged from before. |
 
-### What you genuinely lose vs Bazzite (no sugar-coating)
+### Honest notes
 
-- **No turnkey HDR + VRR gaming session.** Bazzite's headline feature. On Void/NVIDIA this is best-effort and fragile; there is no `gamescope-session` kiosk.
-- **No atomic rollback.** Mitigated by Btrfs snapshots + kept-back kernels + the `hrmpf` rescue ISO — but it's manual.
-- **You own integration.** Driver/kernel/DKMS coordination, udev, repo enabling, breaking-change transitions (the glibc/libxcrypt class of bug) — read <https://voidlinux.org/news/> before big updates.
-- **Steam Linux Runtime vs Void's `/usr/lib64` layout** causes recurring breakage (gconv/libudev/EAC). One-time symlink fixes are scripted here (`./bootstrap.sh --steam-fixes`).
-
-Realistic outcome: **~90% Bazzite parity after one evening**, minus the HDR/VRR
-session, plus ongoing self-maintenance.
+- **Faugus specifically**: not packaged on Void; needs source build + `pip`
+  (`vdf`, `icoextract`) + source umu-launcher (Rust). It rots on Python
+  upgrades. `faugus.sh` does it if you insist, but Lutris is the clean answer.
+- **Native Steam on Void** hits the recurring Steam-Linux-Runtime `/usr/lib64`
+  breakage (gconv/libudev). With Flatpak off the table these fixes are
+  **mandatory**, so `bootstrap.sh` applies them by default (not opt-in).
+- VRR/Adaptive-Sync and HDR are in *System Settings → Display & Monitor* and
+  work on the proprietary driver under Wayland in 2026.
 
 ## Repo layout
 
 ```
-README.md              ← you are here (the plan + decisions)
+README.md                  this file
 docs/
-  01-install-dualboot.md   Safe separate-disk install, step by step
-  02-nvidia-kde.md         RTX 3090 + Plasma 6 Wayland
-  03-gaming.md             Gaming stack + Bazzite→Void parity table
-  04-dev.md                Dev workstation (containers, langs, fish)
-  05-maintenance.md        Rolling-release survival, snapshots, recovery
+  01-install-dualboot.md   safe separate-disk install (unchanged)
+  02-nvidia-kde.md          RTX 3090 + lean KDE Plasma 6 Wayland
+  03-gaming.md              native Steam + Lutris, mandatory Void fixes
+  00-faugus-optional.md     ONLY if you really want Faugus (fragile)
+  05-maintenance.md         rolling-release survival (unchanged)
 pkgs/
-  10-core.txt  20-desktop.txt  30-nvidia.txt  40-gaming.txt  50-dev.txt
-  flatpaks.txt             Your Bazzite flatpaks, to re-add
+  10-core.txt 20-desktop.txt 30-nvidia.txt 40-gaming.txt
 etc/
-  modprobe.d/nvidia.conf   dracut.conf.d/nvidia.conf
+  modprobe.d/nvidia.conf  dracut.conf.d/nvidia.conf  sddm.conf.d/10-wayland.conf
 services.txt               runit services to enable
-bootstrap.sh               Idempotent provisioner (run ON the new Void box)
+bootstrap.sh               idempotent provisioner (Steam fixes baked in)
+faugus.sh                  optional, fragile Faugus-from-source installer
 ```
 
-## How to use it
+## Use it
 
-1. **Now (on Bazzite):** read `docs/`, tweak the `pkgs/*.txt` lists, push this repo to git, and set up a [chezmoi](https://chezmoi.io) dotfiles repo from your current `~/.config` (fish, etc.).
-2. **Install:** follow `docs/01-install-dualboot.md` — disk 1 physically disconnected, Btrfs root, GRUB to disk 2 only.
-3. **Provision (on Void, first boot):**
+1. Install Void on the second disk — `docs/01-install-dualboot.md` (glibc,
+   Btrfs root, GRUB to disk 2 only, disk 1 disconnected).
+2. First boot:
    ```sh
    git clone <this repo> ~/void && cd ~/void
-   ./bootstrap.sh              # repos → update → packages → services → nvidia → flatpak
-   ./bootstrap.sh --steam-fixes   # only after installing Steam, if SLR misbehaves
-   chezmoi init --apply <your-dotfiles-repo>
+   ./bootstrap.sh          # repos → update → packages → nvidia → KDE → services → Steam fixes
    sudo reboot
    ```
-4. **Verify:** `nvidia-smi`, `cat /sys/module/nvidia_drm/parameters/modeset` → `Y`, log into "Plasma (Wayland)".
+3. At SDDM pick **Plasma (Wayland)**. Launch Steam, enable Steam Play for all
+   titles, install a game.
+4. Verify: `nvidia-smi`; `cat /sys/module/nvidia_drm/parameters/modeset` → `Y`;
+   `vkcube` shows the 3090.
+5. Non-Steam / Epic / GOG games: `lutris` (built-in GE-Proton downloader).
+6. (Optional, not recommended) Faugus: `./faugus.sh` — read its header first.
 
-`bootstrap.sh` is **idempotent** (safe to re-run), refuses to run on anything
-that isn't Void, and never touches disk 1 / the bootloader.
-
-> ⚠️ One thing to verify yourself before install: the exact KDE metapackage name
-> in `pkgs/20-desktop.txt`. Void has historically used `kde5`/`kde5-baseapps`
-> (which install **Plasma 6**); some docs list `kde-plasma`. Check the handbook
-> KDE page at install time: <https://docs.voidlinux.org/config/graphical-session/kde.html>
+`bootstrap.sh` is idempotent, refuses to run on non-Void, and never touches
+disk 1 / the bootloader.
