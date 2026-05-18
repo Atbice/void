@@ -34,6 +34,17 @@ stays untouched.
 - VRR/Adaptive-Sync and HDR are in *System Settings → Display & Monitor* and
   work on the proprietary driver under Wayland in 2026.
 
+### Considered & deferred
+
+- **COSMIC desktop** (evaluated 2026-05): **not in Void's official repos** (all
+  `srcpkgs/cosmic-*` 404; packaging PR still WIP). Only an unofficial
+  single-maintainer xbps repo or a heavy from-source Rust build — both fragile
+  on a rolling distro. COSMIC 1.0.8 is young: ~50% Proton breakage,
+  fullscreen-window/cursor bugs, an open unfixed NVIDIA cosmic-comp bug, and
+  **HDR/VRR not until Epoch 3 (~2027)**. **Decision: stay on KDE.** Revisit
+  COSMIC only when it lands in official void-packages **and** Epoch 2
+  (Vulkan/gaming) has shipped.
+
 ## Repo layout
 
 ```
