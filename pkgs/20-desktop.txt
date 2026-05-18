@@ -13,6 +13,8 @@ libspa-bluetooth
 elogind
 dbus
 polkit
+flatpak
+xdg-desktop-portal-gtk
 noto-fonts-ttf
 noto-fonts-emoji
 dejavu-fonts-ttf

@@ -1,6 +1,7 @@
 # 03 — Gaming: native Steam + Lutris (no Flatpak)
 
-Scope: get games running instantly with the leanest native stack. No Flatpak.
+Scope: games running instantly. Native Steam + Lutris, plus a thin Flatpak
+layer for apps not in xbps (notably Faugus). Steam itself stays native.
 
 ## Packages (`pkgs/40-gaming.txt`, installed by bootstrap.sh)
 
@@ -55,14 +56,18 @@ If SLR-forced titles segfault, toggle the compatibility tool off for that game.
 One command, fully xbps-tracked, survives system upgrades. No pip, no source
 builds.
 
-## Faugus Launcher — optional, not recommended (see `docs/00`)
+## Faugus Launcher — via Flatpak (the clean way)
 
-Faugus is **not packaged** on Void and needs a fragile from-source install
-(pip `vdf`/`icoextract` + source umu-launcher/Rust) that rots on Python
-upgrades. It adds maintenance burden for no capability Lutris doesn't already
-cover. If you still want it: `./faugus.sh` (read `docs/00-faugus-optional.md`
-first). To make it your default instead of Lutris, just run `faugus.sh` — both
-can coexist.
+With Flatpak in the stack, Faugus is trivial and well-maintained:
+`io.github.Faugus.faugus-launcher`. `bootstrap.sh` installs it from Flathub
+(it's in `pkgs/flatpaks.txt`). It bundles UMU and auto-downloads GE-Proton —
+nothing to hand-build. Launch it from the application menu.
+
+Faugus and Lutris cover the same job (per-game Proton prefixes + GE-Proton);
+use whichever UI you prefer — both are installed.
+
+> The from-source `faugus.sh` / `docs/00-faugus-optional.md` now exist **only**
+> as a no-Flatpak fallback. Don't use them unless you've disabled Flatpak.
 
 ## Sources
 
