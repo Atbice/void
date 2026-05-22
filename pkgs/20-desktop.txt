@@ -1,0 +1,20 @@
+# Lean KDE Plasma 6 (Wayland). `kde-plasma` is the CURRENT metapackage
+# (kde5 no longer exists). We deliberately DO NOT install kde-baseapps /
+# kde-applications — that is the lean win. konsole + dolphin added by hand.
+kde-plasma
+sddm
+konsole
+dolphin
+xorg-minimal
+NetworkManager
+pipewire
+wireplumber
+libspa-bluetooth
+elogind
+dbus
+polkit
+flatpak
+xdg-desktop-portal-gtk
+noto-fonts-ttf
+noto-fonts-emoji
+dejavu-fonts-ttf

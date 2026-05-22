@@ -1,115 +1,95 @@
-# Artix Linux — lean gaming box (niri + Noctalia, native Steam + Faugus)
+# Void Linux — lean gaming box (Steam + Faugus + games, instant)
 
-A **minimal, clean** Artix Linux (runit) install whose only job is: boot into
-**niri** (scrollable-tiling Wayland), present a **Noctalia** desktop shell,
-and run **Steam + Lutris + Faugus** with the **RTX 3090** driver correct.
-Dual-booted on a separate disk; Bazzite stays untouched.
+A **minimal, clean, efficient** Void Linux install whose only job is: boot into
+KDE Plasma 6 (Wayland), run **Steam** + **Faugus Launcher**, and play games —
+with the **RTX 3090** driver correct. Dual-booted on a separate disk; Bazzite
+stays untouched.
 
-> Pivoted from **Void Linux + KDE Plasma** on 2026-05-22. Void was the right
-> philosophy (lean, runit, in control) but the niri + Noctalia stack needs
-> **Quickshell**, which is not in `void-packages` — that's the exact
-> "unofficial single-maintainer repo or fragile source build" trap we
-> already rejected for COSMIC. Artix (also runit) has access to the AUR,
-> which packages all of niri, Quickshell, Noctalia, and Faugus with active
-> maintainers. Same init philosophy, dramatically better packaging coverage
-> for this stack.
+> Originally a full Bazzite-replica (dev + gaming daily driver), trimmed to the
+> lean gaming scope: no dev stack, no Bazzite-replica bloat. Flatpak is back as
+> a **thin layer** (it's the clean way to get Faugus). `docs/01` (dual-boot)
+> and `docs/05` (maintenance) are unchanged and still apply.
 
 ## Locked decisions (this scope)
 
 | Decision | Choice | Why |
 |---|---|---|
-| OS | **Artix Linux** | Runit available (same appeal as Void); AUR available (Void's missing piece). |
-| Init | **runit** | Same model that drew us to Void. Boot is fast, supervision is dirt-simple, upstream is dead-stable (a feature on a daily-driver box). |
-| Compositor | **niri** (Wayland, scrollable-tiling) | Modern Rust/smithay compositor with explicit NVIDIA support. VRR works on the proprietary driver in 2026. |
-| Shell | **Noctalia** (via Quickshell) | QML-based desktop shell. Status bar + launcher + notifications + control center in one. AUR-packaged. |
-| Display manager | **greetd + tuigreet** | TUI greeter on tty1 — no Qt/GTK at the greeter stage, no Wayland-NVIDIA greeter quirks, instant. |
-| AUR helper | **paru** (`paru-bin`) | Bootstrapped from a one-time clone. Modern, fast, sensible defaults. |
-| Driver | `nvidia-dkms` + `lib32-nvidia-utils` | RTX 3090 = Ampere → current branch. 32-bit libs mandatory or games won't launch. |
-| Steam | **native `steam`** (multilib) | Arch handles Steam-Linux-Runtime cleanly; none of the Void gconv/libudev/nofile workarounds apply. |
-| Faugus | **AUR** `faugus-launcher` | One paru command, fully packaged, bundles UMU + auto GE-Proton. |
-| Also | native **`lutris`** | One pacman command, same job as Faugus (per-game Proton + GE-Proton). Use whichever UI you like. |
-| Install | Separate disk, Bazzite untouched, two ESPs, firmware boot menu (`docs/01`) | Unchanged philosophy from the Void plan. |
+| Desktop | **KDE Plasma 6, Wayland** | Best NVIDIA-Wayland path in 2026; VRR+HDR exposed in GUI. |
+| KDE size | **`kde-plasma` only** (no `kde-baseapps`) + konsole + dolphin | `kde5` no longer exists. `kde-plasma` already bundles plasma-nm/pa, bluedevil, portal, powerdevil, polkit agent. Skipping the apps meta is the lean win. |
+| Driver | `nvidia` (DKMS) + `nvidia-libs-32bit` | RTX 3090 = Ampere → current branch. 32-bit libs mandatory or games won't launch. |
+| Flatpak | **Thin layer** (Flathub + a tiny curated list) | Back by request — it's the clean path for Faugus & a few apps not in xbps. |
+| Steam | **native `steam`** | Leaner than Flatpak Steam. Requires Void Steam-Runtime fixes — baked into `bootstrap.sh`. |
+| Faugus | **Flatpak** `io.github.Faugus.faugus-launcher` | With Flatpak back, this is a one-line clean install (bundles UMU, auto GE-Proton). The fragile source build is now a fallback only. |
+| Also | native **`lutris`** | One xbps command, same job as Faugus (per-game Proton + GE-Proton). Use whichever UI you like. |
+| Install | Separate disk, Bazzite untouched (`docs/01`) | Unchanged. |
 
 ### Honest notes
 
-- **No HDR** under niri. We're explicit: you said you don't use it, so this
-  isn't a loss. If you ever want HDR for a specific game, run it through
-  gamescope (`pkgs/pacman.txt` has it commented; `docs/04-gaming.md`
-  explains).
-- **VRR** works — per-output `variable-refresh-rate` in
-  `~/.config/niri/config.kdl` (see `docs/02-nvidia-niri.md`).
-- **Quickshell + Noctalia from AUR** are the load-bearing pieces of this
-  pivot. AUR packages are user-maintained — `paru` shows the PKGBUILD
-  before each upgrade. Read them. The non-git variants (which we use)
-  track tagged releases and are generally safe.
+- **Faugus** is clean via Flatpak now — the earlier "fragile source build"
+  problem only applies if you disable Flatpak (`docs/00` + `faugus.sh` are that
+  fallback).
+- **Native Steam on Void** hits the recurring Steam-Linux-Runtime `/usr/lib64`
+  breakage (gconv/libudev/nofile). Since Steam stays native, those fixes are
+  **mandatory** and `bootstrap.sh` applies them by default.
+- VRR/Adaptive-Sync and HDR are in *System Settings → Display & Monitor* and
+  work on the proprietary driver under Wayland in 2026.
 
 ### Considered & deferred
 
-- **Stay on Void Linux** (evaluated 2026-05-22): rejected — Quickshell is
-  not in `void-packages`, source-builds on a rolling distro are fragile,
-  unofficial single-maintainer xbps repos are the COSMIC-trap. Artix gives
-  us the same init story (runit) plus AUR coverage of this stack.
-- **COSMIC desktop** (evaluated 2026-05): still deferred. Was deferred under
-  Void for the same packaging reason; under Artix, niri + Noctalia now
-  scratch the "modern non-KDE Wayland" itch, so COSMIC is doubly unneeded.
-  Revisit only when its NVIDIA + gaming story is solid (Epoch 2/3, ~2027).
-- **OpenRC / dinit / s6** (other Artix init systems): runit picked. OpenRC
-  is the biggest ecosystem but slowest boot; dinit is fast/modern but
-  smaller community; s6 is the purist option with the steepest learning
-  curve. runit matches what we already wanted.
+- **COSMIC desktop** (evaluated 2026-05): **not in Void's official repos** (all
+  `srcpkgs/cosmic-*` 404; packaging PR still WIP). Only an unofficial
+  single-maintainer xbps repo or a heavy from-source Rust build — both fragile
+  on a rolling distro. COSMIC 1.0.8 is young: ~50% Proton breakage,
+  fullscreen-window/cursor bugs, an open unfixed NVIDIA cosmic-comp bug, and
+  **HDR/VRR not until Epoch 3 (~2027)**. **Decision: stay on KDE.** Revisit
+  COSMIC only when it lands in official void-packages **and** Epoch 2
+  (Vulkan/gaming) has shipped.
+- **Artix Linux + niri + Noctalia** (drafted 2026-05-22, parked 2026-05-23):
+  Full alternate plan worked out — Artix-runit base, niri (scrollable-tiling
+  Wayland), Noctalia/Quickshell shell via AUR (paru), greetd+tuigreet,
+  optional CachyOS x86-64-v3 layer + `linux-cachyos` kernel. Archived in
+  [`artix/`](./artix/) for future reference. Reverting to the Void+KDE plan
+  here at root is the active path.
 
 ## Repo layout
 
 ```
-README.md                       this file
+README.md                  this file
 docs/
-  01-install-artix.md           Artix runit install, dual-boot, two ESPs, Btrfs
-  02-nvidia-niri.md             RTX 3090 + niri + greetd + runit services
-  03-shell-noctalia.md          Quickshell + Noctalia from AUR, autostart, fonts/portals
-  04-gaming.md                  native Steam + Lutris + Faugus (AUR), gamemode, mangohud
-  05-maintenance.md             rolling-release survival (pacman + paru + snapper)
+  01-install-dualboot.md   safe separate-disk install (unchanged)
+  02-nvidia-kde.md          RTX 3090 + lean KDE Plasma 6 Wayland
+  03-gaming.md              native Steam + Lutris + Flatpak Faugus
+  00-faugus-optional.md     no-Flatpak source fallback ONLY (you won't need it)
+  05-maintenance.md         rolling-release survival (unchanged)
 pkgs/
-  pacman.txt                    official-repo packages (base+desktop+nvidia+gaming+fonts)
-  aur.txt                       quickshell + noctalia-shell + faugus-launcher
+  10-core.txt 20-desktop.txt 30-nvidia.txt 40-gaming.txt
+  flatpaks.txt             tiny curated Flatpak list (Faugus + commented extras)
 etc/
-  modprobe.d/nvidia.conf        KMS + suspend memory preservation
-  mkinitcpio.conf.d/nvidia.conf nvidia modules baked into initramfs
-  greetd/config.toml            tuigreet → niri-session on tty1
-services.txt                    runit services to symlink into /etc/runit/runsvdir/default
-bootstrap.sh                    idempotent provisioner (multilib + pacman + paru + AUR + services)
+  modprobe.d/nvidia.conf  dracut.conf.d/nvidia.conf  sddm.conf.d/10-wayland.conf
+services.txt               runit services to enable
+bootstrap.sh               idempotent provisioner (Steam fixes + Flatpak baked in)
+faugus.sh                  no-Flatpak source fallback (don't use unless needed)
 ```
 
 ## Use it
 
-1. Install Artix on the second disk — `docs/01-install-artix.md` (disk 1
-   physically disconnected, two ESPs, Btrfs root, GRUB to disk 2 only
-   with `--removable`).
-2. First boot to a TTY, then:
+1. Install Void on the second disk — `docs/01-install-dualboot.md` (glibc,
+   Btrfs root, GRUB to disk 2 only, disk 1 disconnected).
+2. First boot:
    ```sh
-   sudo pacman -S git
    git clone <this repo> ~/void && cd ~/void
-   ./bootstrap.sh   # multilib → pacman pkgs → nvidia config → mkinitcpio → runit services → paru → AUR
+   ./bootstrap.sh     # repos → update → pkgs → nvidia → KDE → services → Steam fixes → Flatpak/Faugus
    sudo reboot
    ```
-   Flags: `--no-aur` (skip paru + AUR — Noctalia not installed) ·
+   Flags: `--no-flatpaks` (Flathub only, skip the apps list) ·
+   `--faugus-src` (fallback source build instead of the Flatpak) ·
    `--no-update` · `--dry-run`.
-3. tuigreet on tty1 → log in → niri session.
-4. Verify:
-   ```sh
-   nvidia-smi
-   cat /sys/module/nvidia_drm/parameters/modeset    # -> Y
-   echo $XDG_SESSION_TYPE                            # -> wayland
-   echo $XDG_CURRENT_DESKTOP                         # -> niri
-   ```
-5. Noctalia auto-starts via the `spawn-at-startup "qs" "-c" "noctalia"`
-   line in `~/.config/niri/config.kdl` (sample in `docs/02-nvidia-niri.md`).
-6. Steam → log in → Settings → Compatibility → enable Steam Play for all
-   titles. Faugus and Lutris are in Noctalia's app launcher.
-7. VRR: per-output `variable-refresh-rate` in the niri config.
+3. At SDDM pick **Plasma (Wayland)**. Steam → enable Steam Play for all titles.
+   Faugus Launcher is in the app menu (Flatpak).
+4. Verify: `nvidia-smi`; `cat /sys/module/nvidia_drm/parameters/modeset` → `Y`;
+   `vkcube` shows the 3090.
+5. Non-Steam / Epic / GOG: Faugus or native `lutris` (both have GE-Proton).
+6. VRR/HDR: System Settings → Display & Monitor.
 
-`bootstrap.sh` is idempotent, refuses to run on non-Artix, and never
-touches disk 1 or the bootloader.
-
-> **Note on the repo name**: the directory and remote are still called
-> `void` for git-history continuity; the contents are Artix now. The path
-> `/var/home/bice/dev/void` is intentional.
+`bootstrap.sh` is idempotent, refuses to run on non-Void, never touches disk 1
+or the bootloader.

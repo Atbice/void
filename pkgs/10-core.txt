@@ -1,0 +1,6 @@
+# Minimal base. Repos + nvidia + desktop + gaming handled elsewhere.
+# One package per line. '#' comments and blank lines ignored.
+git
+curl
+chrony
+firefox
