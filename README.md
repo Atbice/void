@@ -47,9 +47,9 @@ stays untouched.
 - **Artix Linux + niri + Noctalia** (drafted 2026-05-22, parked 2026-05-23):
   Full alternate plan worked out — Artix-runit base, niri (scrollable-tiling
   Wayland), Noctalia/Quickshell shell via AUR (paru), greetd+tuigreet,
-  optional CachyOS x86-64-v3 layer + `linux-cachyos` kernel. Archived in
-  [`artix/`](./artix/) for future reference. Reverting to the Void+KDE plan
-  here at root is the active path.
+  optional CachyOS x86-64-v3 layer + `linux-cachyos` kernel. Lives in its
+  own sibling repo at `../artix/` (separate `.git`). Reverting to the
+  Void+KDE plan here is the active path.
 
 ## Repo layout
 
