@@ -172,9 +172,28 @@ if ! grep -q '^GCONV_PATH=' /etc/environment 2>/dev/null; then
 fi
 run "printf '%s\\n%s\\n' '* soft nofile 1048576' '* hard nofile 1048576' | $SUDO tee /etc/security/limits.d/steam.conf >/dev/null"
 GRPS=video,input
-if grep -q '^bluetooth:' /etc/group 2>/dev/null; then GRPS="$GRPS,bluetooth"; fi
+for g in bluetooth gamemode; do  # add only if the package created the group
+  if grep -q "^$g:" /etc/group 2>/dev/null; then GRPS="$GRPS,$g"; fi
+done
 run "$SUDO usermod -aG $GRPS '$TARGET_USER'"
 warn "Log out/in (or reboot) for group + nofile + GCONV_PATH changes to apply."
+
+# --- 6b. Gaming performance tuning ------------------------------------------
+say "Applying gaming tuning (sysctl + NVIDIA shader cache + I/O scheduler)"
+run "$SUDO install -Dm644 '$REPO_DIR/etc/sysctl.d/99-gaming.conf' /etc/sysctl.d/99-gaming.conf"
+run "$SUDO sysctl --system >/dev/null 2>&1 || true"
+run "$SUDO install -Dm644 '$REPO_DIR/etc/udev/rules.d/60-ioschedulers.rules' /etc/udev/rules.d/60-ioschedulers.rules"
+run "$SUDO udevadm control --reload 2>/dev/null || true"
+run "$SUDO udevadm trigger --subsystem-match=block 2>/dev/null || true"
+# NVIDIA shader disk cache: grow to ~12GB + skip cleanup (anti-stutter on Ampere;
+# the driver otherwise caps it ~1GB and recompiles mid-play). pam_env path, like
+# GCONV_PATH above. NOTE: no CACHE_PATH here — pam_env won't expand $HOME.
+for kv in '__GL_SHADER_DISK_CACHE=1' '__GL_SHADER_DISK_CACHE_SIZE=12000000000' '__GL_SHADER_DISK_CACHE_SKIP_CLEANUP=1'; do
+  key=${kv%%=*}
+  if ! grep -q "^$key=" /etc/environment 2>/dev/null; then
+    run "printf '%s\\n' '$kv' | $SUDO tee -a /etc/environment >/dev/null"
+  fi
+done
 
 # --- 7. Flatpak + Flathub ---------------------------------------------------
 say "Setting up Flatpak / Flathub"

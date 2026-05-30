@@ -78,9 +78,38 @@ use whichever UI you prefer — both are installed.
 > The from-source `faugus.sh` / `docs/00-faugus-optional.md` now exist **only**
 > as a no-Flatpak fallback. Don't use them unless you've disabled Flatpak.
 
+## Performance tuning
+
+`bootstrap.sh` bakes in the wins that actually matter on a 5900X + 3090 (NVIDIA /
+Wayland specifics are in `docs/02`):
+
+- **`vm.max_map_count=1048576`** (`/etc/sysctl.d/99-gaming.conf`) — without it many
+  modern games (CS2, UE5 titles, Star Citizen) crash or won't launch. The big one.
+- **NVIDIA shader cache** grown to ~12 GB + skip-cleanup (`/etc/environment`) —
+  anti-stutter on Ampere; helps Proton/DXVK titles most.
+- **gamemode** + **MangoHud** installed. Per game, in Steam → Properties → Launch
+  Options:
+  - `gamemoderun %command%` — performance governor + renice while playing.
+  - `MANGOHUD=1 %command%` — FPS/frametime overlay (GPU% reads 0 on NVIDIA — Void
+    builds MangoHud without NVML; use `nvtop` for GPU stats). Stack: `gamemoderun
+    mangohud %command%`.
+- **DLSS** is the biggest free-FPS lever (Proton 10+/GE bundle it — enable it
+  in-game). On the 3090 keep the **CNN** model; the newer transformer ("DLSS 4")
+  model costs FPS on Ampere (no FP8).
+- **ntsync** is already in Void's kernel and used automatically by recent
+  Proton/GE; A/B a title with `PROTON_USE_NTSYNC=1 %command%` if curious.
+
+Deliberately **not** done (honest noise/risk): `mitigations=off` (≈0% on Zen 3,
+security hit), custom/CachyOS kernels (break the NVIDIA DKMS rebuild), forcing GE
+or `PROTON_NO_FSYNC` globally. `scx` gaming schedulers need a kernel built with
+`CONFIG_SCHED_CLASS_EXT` — not yet in Void's kernel; revisit when linux6.19 lands.
+
 ## Sources
 
 - Void steam `README.voidlinux`: <https://github.com/void-linux/void-packages/blob/master/srcpkgs/steam/files/README.voidlinux>
+- gamemode: <https://github.com/FeralInteractive/gamemode>
+- MangoHud: <https://github.com/flightlessmango/MangoHud>
+- vm.max_map_count (gaming): <https://wiki.archlinux.org/title/Gaming>
 - Void `lutris` template: <https://github.com/void-linux/void-packages/blob/master/srcpkgs/lutris/template>
 - steam-runtime #680 (gconv): <https://github.com/ValveSoftware/steam-runtime/issues/680>
 - steam-runtime #533 (libudev): <https://github.com/ValveSoftware/steam-runtime/issues/533>

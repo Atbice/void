@@ -7,7 +7,10 @@ Ampere is the mainstream, well-behaved path.
 
 RTX 3090 = Ampere → the **current `nvidia` package** (NOT a legacy
 `nvidia470/580`), from `void-repo-nonfree`. DKMS — auto-rebuilds on kernel
-updates via xbps triggers. nouveau is auto-blacklisted by the package.
+updates via xbps triggers. nouveau is auto-blacklisted by the package. Note: 595
+builds the **open kernel modules** (`kernel-open`, Dual MIT/GPL) — only the
+userspace is proprietary (`modinfo nvidia | grep license` → `Dual MIT/GPL`). Don't
+"downgrade" to `nvidia580` for a 3090.
 
 - **`nvidia-libs-32bit`** from `void-repo-multilib-nonfree` — *mandatory*; without
   it Steam/Proton games will not launch. This is the #1 mistake.
@@ -19,7 +22,10 @@ updates via xbps triggers. nouveau is auto-blacklisted by the package.
 - `modeset=1` is default-on in the 590+ packaging — **verify** anyway:
   `cat /sys/module/nvidia_drm/parameters/modeset` → must be `Y`.
 - No `GBM_BACKEND` / `__GLX_VENDOR_LIBRARY_NAME` env vars needed with the
-  current driver. GBM is the default.
+  current driver (GBM is the default), and **explicit sync** is auto-negotiated
+  (595 + Plasma 6.6) — the historical NVIDIA-Wayland flicker is gone. Do **not**
+  re-add legacy workarounds (`__GL_MaxFramesAllowed`, `__GL_YIELD`,
+  `KWIN_DRM_NO_AMS`, `__GL_THREADED_OPTIMIZATIONS`) — obsolete to harmful now.
 
 ## Lean KDE Plasma 6 — the resolved package set
 

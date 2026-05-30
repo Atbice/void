@@ -4,6 +4,13 @@
 steam
 lutris
 mono
+# gamemode: `gamemoderun %command%` flips the CPU governor to performance + renices
+# while a game runs (works on runit via elogind D-Bus; needs the `gamemode` group).
+gamemode
+# MangoHud (+32bit): FPS/frametime overlay — `MANGOHUD=1 %command%`. NB: Void builds
+# it without NVML, so GPU%/VRAM read 0 on NVIDIA (use nvtop alongside); FPS works.
+MangoHud
+MangoHud-32bit
 # libunwind: external Wine / GE-Proton builds (Lutris) link libunwind.so.8 in
 # their ntdll.so; the lean set won't pull it otherwise -> GE-Proton installs fail.
 libunwind

@@ -1,0 +1,7 @@
+# I/O scheduler per device class. Installed by bootstrap.sh.
+# Void's multi-queue NVMe already defaults to `none`; this pins it as a
+# determinism guard (so a default/distro change can't silently flip it).
+# none = lowest overhead for NVMe; mq-deadline for SATA SSD; bfq for spinning disk.
+ACTION=="add|change", KERNEL=="nvme[0-9]*n[0-9]*", ATTR{queue/scheduler}="none"
+ACTION=="add|change", KERNEL=="sd[a-z]*", ATTR{queue/rotational}=="0", ATTR{queue/scheduler}="mq-deadline"
+ACTION=="add|change", KERNEL=="sd[a-z]*", ATTR{queue/rotational}=="1", ATTR{queue/scheduler}="bfq"
