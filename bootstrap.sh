@@ -118,7 +118,9 @@ run "$SUDO sysctl --system >/dev/null 2>&1 || true"
 say "Enabling runit services"
 for s in $(pkglist "$REPO_DIR/services.txt"); do
   if [ "$s" = elogind ]; then
-    warn "refusing to enable elogind as a runit service — it is dbus-activated on Void; a standalone service races it into an 'already running' respawn loop. Skipped."
+    warn "refusing to enable elogind as a runit service — it is dbus-activated on Void; a standalone service races it into an 'already running' respawn loop. Skipped. (To override you must first neutralise its dbus activation file — see services.txt.)"
+  elif [ "$s" = NetworkManager ]; then
+    echo "  deferring NetworkManager to the dhcpcd handoff (step 7b) — keeps the link up during downloads"
   elif [ -e "/var/service/$s" ]; then echo "  $s already enabled"
   elif [ -d "/etc/sv/$s" ]; then run "$SUDO ln -s /etc/sv/$s /var/service/"; echo "  enabled $s"
   else warn "no /etc/sv/$s — skipped (package not installed?)"; fi
@@ -214,22 +216,26 @@ if [ "$DO_FAUGUS_SRC" = 1 ]; then
   say "Running optional faugus.sh — SOURCE build (fragile; see docs/00)"
   warn "The Flatpak (step 7) is the clean way to get Faugus. Source build is a fallback."
   if [ "$DRY" = 1 ]; then echo "  [dry-run] $REPO_DIR/faugus.sh"
-  else sh "$REPO_DIR/faugus.sh"; fi
+  else sh "$REPO_DIR/faugus.sh" || warn "faugus.sh failed/aborted — continuing to finalize"; fi
 fi
 
-# --- 7b. networking: NetworkManager owns it — disable the default dhcpcd -----
-# Void's base install enables dhcpcd; running it alongside NetworkManager makes
-# them fight over the interface. NM is enabled above. Done LAST so the network
-# stays up via dhcpcd through the update/install/flatpak steps.
-say "Finalizing networking (NetworkManager)"
+# --- 7b. networking handoff: enable NetworkManager, then disable dhcpcd ------
+# NM was deferred from the service loop so the base install's dhcpcd carries the
+# whole update/install/flatpak run. Enable NM now, give it a moment, then drop
+# dhcpcd — clean handoff, no two-DHCP-clients fight (which drops Wi-Fi mid-run).
+say "Finalizing networking (NetworkManager handoff)"
 if [ "$DRY" = 1 ]; then
-  echo "  [dry-run] would disable dhcpcd if present (NetworkManager handles networking)"
-elif [ -e /var/service/NetworkManager ] && [ -e /var/service/dhcpcd ]; then
-  $SUDO rm -f /var/service/dhcpcd
-  echo "  disabled dhcpcd (NetworkManager handles networking)"
+  echo "  [dry-run] would enable NetworkManager, then disable dhcpcd"
 else
-  echo "  dhcpcd: nothing to disable"
+  if [ ! -e /var/service/NetworkManager ] && [ -d /etc/sv/NetworkManager ]; then
+    $SUDO ln -s /etc/sv/NetworkManager /var/service/ && echo "  enabled NetworkManager"
+  fi
+  if [ -e /var/service/NetworkManager ] && [ -e /var/service/dhcpcd ]; then
+    sleep 2
+    $SUDO rm -f /var/service/dhcpcd && echo "  disabled dhcpcd (NetworkManager owns networking)"
+  fi
 fi
+warn "On Wi-Fi? NetworkManager now owns it — if not auto-connected after reboot: nmcli device wifi connect <ssid> password <pw>"
 
 # --- done -------------------------------------------------------------------
 say "Done."

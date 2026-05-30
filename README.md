@@ -32,7 +32,8 @@ stays untouched.
   breakage (gconv/libudev/nofile). Since Steam stays native, those fixes are
   **mandatory** and `bootstrap.sh` applies them by default.
 - VRR/Adaptive-Sync and HDR are in *System Settings → Display & Monitor* and
-  work on the proprietary driver under Wayland in 2026.
+  work on the current NVIDIA driver (open kernel modules + proprietary userspace)
+  under Wayland in 2026.
 
 ### Considered & deferred
 
@@ -66,6 +67,8 @@ pkgs/
   flatpaks.txt             tiny curated Flatpak list (Faugus + commented extras)
 etc/
   modprobe.d/nvidia.conf  dracut.conf.d/nvidia.conf  sddm.conf.d/10-wayland.conf
+  sysctl.d/{99-zram,99-gaming}.conf  sv/zramen/conf  cron.weekly/fstrim
+  udev/rules.d/60-ioschedulers.rules
 services.txt               runit services to enable
 bootstrap.sh               idempotent provisioner (Steam fixes + Flatpak baked in)
 faugus.sh                  no-Flatpak source fallback (don't use unless needed)
@@ -77,8 +80,10 @@ faugus.sh                  no-Flatpak source fallback (don't use unless needed)
    ext4 root, GRUB to disk 2 only, disk 1 disconnected).
 2. First boot:
    ```sh
+   sudo xbps-install -Sy git    # base install ships no git yet
    git clone <this repo> ~/void && cd ~/void
    ./bootstrap.sh     # repos → update → pkgs → nvidia → KDE → services → Steam fixes → Flatpak/Faugus
+                      # if sudo errors (wheel not set up), run `su -` first, then ./bootstrap.sh
    sudo reboot
    ```
    Flags: `--no-flatpaks` (Flathub only, skip the apps list) ·

@@ -96,7 +96,10 @@ reorder `se,us`), or just configure layouts in System Settings for the session.
 
 ```sh
 sudo ln -s /etc/sv/dbus           /var/service/
-sudo ln -s /etc/sv/NetworkManager /var/service/
+sudo ln -s /etc/sv/bluetoothd     /var/service/
+sudo ln -s /etc/sv/cronie         /var/service/   # weekly TRIM (anacron)
+sudo ln -s /etc/sv/zramen         /var/service/   # zram swap
+sudo ln -s /etc/sv/NetworkManager /var/service/   # bootstrap defers this to the 7b dhcpcd handoff
 sudo ln -s /etc/sv/sddm           /var/service/   # enable last to test the box first
 ```
 
@@ -106,8 +109,8 @@ scripts call `sv check dbus`). Enabling `sddm` last is just so you can verify th
 system before the greeter takes the VT.
 
 **Do NOT enable `elogind` as a runit service.** It ships `/etc/sv/elogind`, but on
-current Void it is **dbus-activated**: the `dbus` package is built
-`--enable-elogind`, and the elogind package installs a dbus activation file
+current Void it is **dbus-activated**: the elogind package installs a dbus
+activation file
 (`/usr/share/dbus-1/system-services/org.freedesktop.login1.service`,
 `Exec=…/elogind --daemon`). The first `org.freedesktop.login1` call — SDDM's
 `pam_elogind` or Plasma — auto-spawns elogind. If you *also* symlink
@@ -121,7 +124,10 @@ dbus-activated elogind → kernel sleep + `/usr/lib/elogind/system-sleep` hooks;
 no standalone service is needed. (The handbook's "enable its service if you have
 issues" remedy would *also* require neutering the dbus activation file so the two
 don't race — unnecessary complexity for this box.) The official KDE-on-Void page
-enables only `dbus`, `NetworkManager`, `sddm` — exactly our set.
+enables only `dbus`, `NetworkManager`, `sddm`; we add `bluetoothd`, `cronie`,
+`zramen` on top (all genuine runit services, unlike elogind). NetworkManager is
+enabled last (step 7b), as the dhcpcd→NM handoff, so it doesn't fight dhcpcd for
+the link during the install's downloads.
 
 `bootstrap.sh` disables the base install's `dhcpcd` once NetworkManager is enabled
 — running both fights over the interface (it does this last, so the network stays

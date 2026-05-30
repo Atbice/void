@@ -30,12 +30,12 @@ also catches the job up if the box was off in Bazzite at the scheduled time). Do
 ext4 root means no boot-into-snapshot. That's intentional; your safety net is layered:
 
 1. **This git repo = the rebuild recipe.** Fresh disk → `docs/01` → `git clone`
-   → `./bootstrap.sh` → `chezmoi apply` and you're back. Commit the package
+   → `./bootstrap.sh` → `chezmoi init --apply <dotfiles-repo>` and you're back. Commit the package
    manifest whenever the box is stable (see below).
 2. **Cloud = your data backup** — whatever in `/home` you care about.
 3. **Previous kernel in the GRUB menu** — first defense for a bad kernel/DKMS bump.
 4. **`hrmpf` USB → `xchroot`** — repair packages / initramfs / GRUB in place.
-5. **Reinstall + `./bootstrap.sh` + `chezmoi apply`** — the repo *is* the recovery
+5. **Reinstall + `./bootstrap.sh` + `chezmoi init --apply <dotfiles-repo>`** — the repo *is* the recovery
    image; a hosed userland is a ~20-min rebuild, not a disaster.
 6. **Bazzite on disk 1 is independent** — worst case, boot it and fix Void over a
    chroot from there.
@@ -54,7 +54,7 @@ ext4 root means no boot-into-snapshot. That's intentional; your safety net is la
 - **`hrmpf`** — Void-based rescue ISO. `xchroot /mnt /bin/bash` to repair
   packages, regen initramfs, reinstall GRUB to disk 2's ESP. See `docs/01`.
 - Old kernel entry in GRUB — first line of defense for DKMS failures.
-- Reinstall + `./bootstrap.sh` + `chezmoi apply` — the repo is your recovery image
+- Reinstall + `./bootstrap.sh` + `chezmoi init --apply <dotfiles-repo>` — the repo is your recovery image
   (no snapshots; a hosed userland/FS is a quick rebuild, not a loss).
 - Bazzite is independent on disk 1 — worst case you boot Bazzite and fix Void
   over SSH/chroot from there.
@@ -69,7 +69,7 @@ ext4 root means no boot-into-snapshot. That's intentional; your safety net is la
   not here — keep provisioning and dotfiles decoupled.
 
 Treat this repo as the source of truth: a dead disk → new disk, `docs/01`,
-`./bootstrap.sh`, `chezmoi apply`, back in business.
+`./bootstrap.sh`, `chezmoi init --apply <dotfiles-repo>`, back in business.
 
 ## Sources
 

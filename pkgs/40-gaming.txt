@@ -11,6 +11,8 @@ gamemode
 # it without NVML, so GPU%/VRAM read 0 on NVIDIA (use nvtop alongside); FPS works.
 MangoHud
 MangoHud-32bit
+# nvtop: GPU monitor — the GPU stats MangoHud can't show (Void builds it w/o NVML).
+nvtop
 # libunwind: external Wine / GE-Proton builds (Lutris) link libunwind.so.8 in
 # their ntdll.so; the lean set won't pull it otherwise -> GE-Proton installs fail.
 libunwind

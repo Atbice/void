@@ -8,3 +8,6 @@ firefox
 cronie
 # zramen: compressed-RAM swap manager (config: etc/sv/zramen/conf + sysctl).
 zramen
+# chezmoi: dotfiles manager — `chezmoi init --apply <repo>` restores your config
+# on a fresh box (dotfiles live in a SEPARATE repo, not this one — see docs/05).
+chezmoi

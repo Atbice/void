@@ -23,7 +23,8 @@ WORK="${TMPDIR:-/tmp}/faugus-build.$$"
 trap 'rm -rf "$WORK"' EXIT
 
 printf 'Faugus on Void is fragile (see docs/00). Continue? [y/N] '
-read -r ans; case "$ans" in y|Y) ;; *) echo "aborted."; exit 0 ;; esac
+read -r ans || ans=N   # non-TTY stdin (e.g. piped) -> treat as abort, don't die
+case "$ans" in y|Y) ;; *) echo "aborted."; exit 0 ;; esac
 
 say "Installing all build + runtime deps from xbps (no pipx/pip needed)"
 run "$SUDO xbps-install -Sy meson ninja git rust cargo scdoc \
