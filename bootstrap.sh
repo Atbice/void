@@ -59,20 +59,46 @@ if [ "$DO_UPDATE" = 1 ]; then
   warn "If a new kernel was installed, reboot before continuing (NVIDIA DKMS)."
 fi
 
+# --- 2b. NVIDIA module config BEFORE the package install --------------------
+# So the initramfs build that nvidia's DKMS install triggers already bakes in
+# the modules (dracut conf) and the boot-time options (modprobe conf) are set.
+say "Installing NVIDIA modprobe + dracut config (pre-install)"
+run "$SUDO install -Dm644 '$REPO_DIR/etc/modprobe.d/nvidia.conf'    /etc/modprobe.d/nvidia.conf"
+run "$SUDO install -Dm644 '$REPO_DIR/etc/dracut.conf.d/nvidia.conf' /etc/dracut.conf.d/nvidia.conf"
+
 # --- 3. packages ------------------------------------------------------------
 PKGS=$(pkglist "$REPO_DIR"/pkgs/10-core.txt "$REPO_DIR"/pkgs/20-desktop.txt \
                 "$REPO_DIR"/pkgs/30-nvidia.txt "$REPO_DIR"/pkgs/40-gaming.txt)
 say "Installing packages"; echo "  $PKGS"
 run "$SUDO xbps-install -y $PKGS"
 
-# --- 4. NVIDIA config + initramfs ------------------------------------------
-say "Installing NVIDIA modprobe + dracut config"
-run "$SUDO install -Dm644 '$REPO_DIR/etc/modprobe.d/nvidia.conf'    /etc/modprobe.d/nvidia.conf"
-run "$SUDO install -Dm644 '$REPO_DIR/etc/dracut.conf.d/nvidia.conf' /etc/dracut.conf.d/nvidia.conf"
-say "Installing SDDM Wayland-greeter config (delete it if the greeter misbehaves)"
+# --- 4. SDDM config + initramfs regen + NVIDIA DKMS gate -------------------
+say "Installing SDDM Wayland-greeter config (recovery recipe in docs/02)"
 run "$SUDO install -Dm644 '$REPO_DIR/etc/sddm.conf.d/10-wayland.conf' /etc/sddm.conf.d/10-wayland.conf"
 say "Regenerating initramfs (xbps-reconfigure -fa)"
 run "$SUDO xbps-reconfigure -fa"
+
+# xbps exits 0 even when the DKMS build FAILS (void-packages#42047), so a black
+# screen on reboot can masquerade as success. Gate hard on the real module for
+# the kernel we'll actually boot.
+say "Verifying the NVIDIA kernel module built (DKMS)"
+if [ "$DRY" = 1 ]; then
+  echo "  [dry-run] dkms status nvidia (would hard-fail unless 'installed' for newest kernel)"
+else
+  NEWK=$(ls /usr/lib/modules 2>/dev/null | sort -V | tail -1)
+  if ! dkms status nvidia 2>/dev/null | grep -F "$NEWK" | grep -q installed; then
+    warn "NVIDIA DKMS module is NOT installed for kernel $NEWK."
+    warn "Inspect /var/lib/dkms/nvidia/*/build/make.log, fix the build, then re-run"
+    warn "./bootstrap.sh (idempotent). Do NOT reboot expecting a Wayland desktop."
+    exit 1
+  fi
+  echo "  dkms: nvidia installed for $NEWK"
+  if [ "$(uname -r)" != "$NEWK" ]; then
+    warn "The update pulled a newer kernel ($NEWK) than the running one ($(uname -r))."
+    warn "Reboot now, then re-run ./bootstrap.sh to finish on $NEWK (safe: idempotent)."
+    exit 1
+  fi
+fi
 
 # --- 5. runit services ------------------------------------------------------
 # NOTE: elogind is deliberately NOT enabled as a runit service. On current Void
@@ -89,6 +115,23 @@ for s in $(pkglist "$REPO_DIR/services.txt"); do
   else warn "no /etc/sv/$s — skipped (package not installed?)"; fi
 done
 
+# --- 5b. PipeWire (Void does NOT autostart it — without this there is NO audio)
+# pipewire/wireplumber ship .desktop files in /usr/share/applications (NOT
+# /etc/xdg/autostart) and KDE won't auto-spawn them, so the desktop AND games
+# are silent. Link the autostart + the conf.d drop-ins + the ALSA bridges.
+say "Wiring up PipeWire (autostart + pulse replacement + ALSA bridges)"
+run "$SUDO install -d /etc/pipewire/pipewire.conf.d /etc/alsa/conf.d /etc/xdg/autostart"
+for pair in \
+  '/usr/share/examples/wireplumber/10-wireplumber.conf:/etc/pipewire/pipewire.conf.d/' \
+  '/usr/share/examples/pipewire/20-pipewire-pulse.conf:/etc/pipewire/pipewire.conf.d/' \
+  '/usr/share/alsa/alsa.conf.d/50-pipewire.conf:/etc/alsa/conf.d/' \
+  '/usr/share/alsa/alsa.conf.d/99-pipewire-default.conf:/etc/alsa/conf.d/' \
+  '/usr/share/applications/pipewire.desktop:/etc/xdg/autostart/'; do
+  src=${pair%:*}; dst=${pair##*:}
+  if [ -e "$src" ] || [ "$DRY" = 1 ]; then run "$SUDO ln -sf '$src' '$dst'"; echo "  linked $src"
+  else warn "PipeWire example missing: $src (skipped — audio may need manual setup)"; fi
+done
+
 # --- 6. Steam-on-Void fixes (MANDATORY for native Steam) --------------------
 say "Applying mandatory Steam-on-Void fixes"
 if [ ! -e /usr/lib64/gconv ] && [ -d /usr/lib/gconv ]; then
@@ -103,7 +146,9 @@ if ! grep -q '^GCONV_PATH=' /etc/environment 2>/dev/null; then
   run "printf '%s\\n' 'GCONV_PATH=/usr/lib/gconv' | $SUDO tee -a /etc/environment >/dev/null"
 fi
 run "printf '%s\\n%s\\n' '* soft nofile 1048576' '* hard nofile 1048576' | $SUDO tee /etc/security/limits.d/steam.conf >/dev/null"
-run "$SUDO usermod -aG video,input '$TARGET_USER'"
+GRPS=video,input
+if grep -q '^bluetooth:' /etc/group 2>/dev/null; then GRPS="$GRPS,bluetooth"; fi
+run "$SUDO usermod -aG $GRPS '$TARGET_USER'"
 warn "Log out/in (or reboot) for group + nofile + GCONV_PATH changes to apply."
 
 # --- 7. Flatpak + Flathub ---------------------------------------------------
@@ -139,7 +184,9 @@ Next steps:
        nvidia-smi
        cat /sys/module/nvidia_drm/parameters/modeset      # -> Y
        echo $XDG_SESSION_TYPE                              # -> wayland
-       vkcube                                              # 3090 renders
+       vkcube            # window MUST name "GeForce RTX 3090" (NOT llvmpipe)
+       wpctl status      # audio: a sink must be listed (else PipeWire is dead)
+       dkms status nvidia                                  # -> installed
   4. Steam -> log in -> Settings -> Compatibility ->
        enable "Steam Play for all other titles" -> install a game.
   5. Faugus Launcher: installed as a Flatpak — launch it from the menu.

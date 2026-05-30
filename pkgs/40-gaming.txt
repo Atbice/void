@@ -4,8 +4,18 @@
 steam
 lutris
 mono
+# libunwind: external Wine / GE-Proton builds (Lutris) link libunwind.so.8 in
+# their ntdll.so; the lean set won't pull it otherwise -> GE-Proton installs fail.
+libunwind
 libgcc-32bit
 libstdc++-32bit
 libdrm-32bit
 libglvnd-32bit
 libva-32bit
+# 32-bit host audio: Lutris/Wine 32-bit prefixes + SLR-disabled native titles run
+# SILENT without these (Proton's pressure-vessel bundles its own, so SLR is fine).
+libpulseaudio-32bit
+alsa-plugins-pulseaudio-32bit
+alsa-pipewire-32bit
+libopenal-32bit
+SDL2-32bit

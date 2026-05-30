@@ -5,6 +5,9 @@
 # greeter grabs the VT.
 dbus
 NetworkManager
+# bluetoothd: a REAL runit service (unlike elogind) — bluez ships /etc/sv/bluetoothd.
+# Enables the Bluetooth adapter for wireless controllers/headsets.
+bluetoothd
 sddm
 # elogind is INTENTIONALLY NOT listed. The elogind package ships /etc/sv/elogind
 # (via `vsv elogind`) AND a dbus activation file

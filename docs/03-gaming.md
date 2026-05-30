@@ -66,7 +66,11 @@ nothing to hand-build. Launch it from the application menu.
 > Note: the Faugus Flatpak is **community-maintained** (not Flathub-verified) and
 > ships a broad sandbox (`--device=all`, `--filesystem=home`, network/ipc, and
 > `--own-name=com.steampowered.*`). That breadth is normal for a launcher that
-> drives Steam/Proton, but install it knowing it isn't sandbox-isolated.
+> drives Steam/Proton, but install it knowing it isn't sandbox-isolated. Two
+> Flatpak-specific quirks: the **Stop button** and **Gamescope** integration
+> don't work from inside the Flatpak; native-Steam shortcut detection *does*
+> work (because `~/.steam` is inside the `--filesystem=home` grant). For the
+> fewest surprises, native **Lutris** covers the same per-game-Proton job.
 
 Faugus and Lutris cover the same job (per-game Proton prefixes + GE-Proton);
 use whichever UI you prefer — both are installed.

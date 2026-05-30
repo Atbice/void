@@ -10,6 +10,10 @@ NetworkManager
 pipewire
 wireplumber
 libspa-bluetooth
+# bluez: the Bluetooth daemon (ships /etc/sv/bluetoothd, enabled in services.txt)
+# + the `bluetooth` group. libspa-bluetooth above only gives PipeWire the BT
+# audio backend; without bluez there is no adapter to pair anything to.
+bluez
 elogind
 dbus
 polkit

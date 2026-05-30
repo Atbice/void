@@ -43,14 +43,28 @@ sudo xbps-install -S \
 
 - `xorg-minimal` is still required: the default SDDM **greeter** runs on X
   (the Plasma *session* is Wayland regardless). It's small.
-- Enable PipeWire per the handbook (symlink the example
-  `pipewire-pulse`/`wireplumber` autostarts into `/etc/xdg/autostart`).
+- PipeWire: `bootstrap.sh` wires it up — **Void does not autostart it**, so
+  without this you have *no audio* (desktop and games). It links
+  `pipewire.desktop` into `/etc/xdg/autostart`, the wireplumber + pipewire-pulse
+  example drop-ins into `/etc/pipewire/pipewire.conf.d/`, and the ALSA bridges
+  into `/etc/alsa/conf.d/`. Verify after login: `wpctl status` must list a sink.
 
-### Optional: SDDM greeter on Wayland
+### SDDM greeter on Wayland
 
 `bootstrap.sh` installs `etc/sddm.conf.d/10-wayland.conf` (greeter via
-`kwin_wayland`). Works on NVIDIA with the current driver. If the greeter
-misbehaves, delete that file — the session stays Wayland either way.
+`kwin_wayland --drm`). Works on NVIDIA with the current driver. `--locale1` is
+intentionally omitted (Void has no `systemd-localed` provider — it's a no-op;
+the greeter uses the default `us` keymap, override via
+`GreeterEnvironment=XKB_DEFAULT_LAYOUT=...`).
+
+If the greeter misbehaves (black screen / no greeter), recover from a TTY — the
+Plasma **session** is Wayland regardless of the greeter's display server:
+
+```sh
+# Ctrl+Alt+F2 to a text console, log in, then:
+sudo rm /etc/sddm.conf.d/10-wayland.conf
+sudo sv restart sddm
+```
 
 ## runit services
 
