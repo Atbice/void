@@ -4,6 +4,10 @@
 # Faugus Launcher — the CLEAN way to run Faugus (vs the fragile faugus.sh).
 io.github.Faugus.faugus-launcher
 
+# Daily drivers
+dev.vencord.Vesktop              # Discord: Wayland screenshare-WITH-audio (venmic/PipeWire) + Vencord
+com.google.Chrome                # Google Chrome (proprietary, not in xbps; native alt is `chromium`)
+
 # Common extras from your Bazzite gaming setup — uncomment what you want:
 # net.davidotek.pupgui2          # ProtonUp-Qt (GE-Proton manager)
 # com.usebottles.bottles         # Bottles

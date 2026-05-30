@@ -3,7 +3,8 @@
 git
 curl
 chrony
-firefox
+# Browser: Google Chrome via Flatpak (pkgs/flatpaks.txt), not Firefox.
+# (Chrome is proprietary / not in xbps; `chromium` is the native alternative.)
 # cronie: cron daemon (+anacron) — fires the weekly fstrim TRIM job (docs/05).
 cronie
 # zramen: compressed-RAM swap manager (config: etc/sv/zramen/conf + sysctl).
