@@ -53,9 +53,9 @@ sudo xbps-install -S \
 
 `bootstrap.sh` installs `etc/sddm.conf.d/10-wayland.conf` (greeter via
 `kwin_wayland --drm`). Works on NVIDIA with the current driver. `--locale1` is
-intentionally omitted (Void has no `systemd-localed` provider — it's a no-op;
-the greeter uses the default `us` keymap, override via
-`GreeterEnvironment=XKB_DEFAULT_LAYOUT=...`).
+intentionally omitted (Void has no `systemd-localed` provider — it's a no-op);
+the greeter keymap is set via `GreeterEnvironment=XKB_DEFAULT_LAYOUT=se`
+(Swedish), since the greeter process doesn't read `/etc/environment`.
 
 If the greeter misbehaves (black screen / no greeter), recover from a TTY — the
 Plasma **session** is Wayland regardless of the greeter's display server:
@@ -65,6 +65,21 @@ Plasma **session** is Wayland regardless of the greeter's display server:
 sudo rm /etc/sddm.conf.d/10-wayland.conf
 sudo sv restart sddm
 ```
+
+### Keyboard layout (Swedish)
+
+`bootstrap.sh` sets Swedish in all three independent places, so you get `se`
+from the boot console through to the desktop:
+
+- **Console TTYs** — `KEYMAP=sv-latin1` in `/etc/rc.conf` (Void applies it at boot).
+- **Wayland/Plasma session** — `XKB_DEFAULT_LAYOUT=se` in `/etc/environment`
+  (kwin reads it via pam_env). On first login Plasma inherits this; once you set
+  layouts in *System Settings → Keyboard*, that per-user `kxkbrc` takes over.
+- **SDDM greeter** — `XKB_DEFAULT_LAYOUT=se` in the greeter's `GreeterEnvironment`
+  (`etc/sddm.conf.d/10-wayland.conf`).
+
+To change it, swap `se` / `sv-latin1` in those three spots (or just pick a layout
+in System Settings for the running session).
 
 ## runit services
 

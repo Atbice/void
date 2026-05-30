@@ -132,6 +132,17 @@ for pair in \
   else warn "PipeWire example missing: $src (skipped — audio may need manual setup)"; fi
 done
 
+# --- 5c. Keyboard layout: Swedish -------------------------------------------
+# Three independent places need it: console TTYs (rc.conf), the Wayland/Plasma
+# session default (libxkbcommon via pam_env), and the SDDM greeter (set in
+# etc/sddm.conf.d/10-wayland.conf, since the greeter ignores /etc/environment).
+say "Setting keyboard layout to Swedish (console + Wayland session)"
+run "$SUDO sed -i '/^KEYMAP=/d' /etc/rc.conf"
+run "printf '%s\\n' 'KEYMAP=sv-latin1' | $SUDO tee -a /etc/rc.conf >/dev/null"
+if ! grep -q '^XKB_DEFAULT_LAYOUT=' /etc/environment 2>/dev/null; then
+  run "printf '%s\\n' 'XKB_DEFAULT_LAYOUT=se' | $SUDO tee -a /etc/environment >/dev/null"
+fi
+
 # --- 6. Steam-on-Void fixes (MANDATORY for native Steam) --------------------
 say "Applying mandatory Steam-on-Void fixes"
 if [ ! -e /usr/lib64/gconv ] && [ -d /usr/lib/gconv ]; then
