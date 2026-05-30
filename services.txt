@@ -8,6 +8,10 @@ NetworkManager
 # bluetoothd: a REAL runit service (unlike elogind) — bluez ships /etc/sv/bluetoothd.
 # Enables the Bluetooth adapter for wireless controllers/headsets.
 bluetoothd
+# cronie: cron daemon (+anacron) — runs the weekly fstrim TRIM job.
+cronie
+# zramen: brings up zram swap at boot (reads etc/sv/zramen/conf).
+zramen
 sddm
 # elogind is INTENTIONALLY NOT listed. The elogind package ships /etc/sv/elogind
 # (via `vsv elogind`) AND a dbus activation file

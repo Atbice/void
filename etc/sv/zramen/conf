@@ -1,0 +1,9 @@
+# zram swap config — sourced by /etc/sv/zramen/run, so every line MUST use
+# `export` (the `zramen make` child reads the environment, not the shell vars).
+# Installed by bootstrap.sh; enabling the `zramen` runit service brings it up.
+# ZRAM_SIZE is a PERCENT of RAM, capped at ZRAM_MAX_SIZE (MiB). zstd gives the
+# best compression (a 5900X handles it easily); high priority so it's preferred.
+export ZRAM_COMP_ALGORITHM=zstd
+export ZRAM_SIZE=50
+export ZRAM_MAX_SIZE=8192
+export ZRAM_PRIORITY=100

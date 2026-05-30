@@ -74,7 +74,7 @@ faugus.sh                  no-Flatpak source fallback (don't use unless needed)
 ## Use it
 
 1. Install Void on the second disk — `docs/01-install-dualboot.md` (glibc,
-   Btrfs root, GRUB to disk 2 only, disk 1 disconnected).
+   ext4 root, GRUB to disk 2 only, disk 1 disconnected).
 2. First boot:
    ```sh
    git clone <this repo> ~/void && cd ~/void

@@ -1,0 +1,5 @@
+#!/bin/sh
+# Weekly SSD TRIM — run by cronie+anacron via run-parts on /etc/cron.weekly.
+# Installed 0755 by bootstrap.sh. Keep the filename unsuffixed + executable:
+# run-parts silently skips names containing a dot (e.g. fstrim.sh).
+exec fstrim --all

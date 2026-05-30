@@ -17,15 +17,28 @@ sudo xbps-install -Su      # transaction; the 2nd pass applies the rest
   list, expect to re-run.
 - Hold a package: `sudo xbps-pkgdb -m hold <pkg>`.
 
-## Snapshots = your rollback (Btrfs root, chosen at install)
+## SSD TRIM (ext4)
 
-This is why `docs/01` picks Btrfs. Snapshot before any non-trivial update:
+No `fstrim.timer` on Void (no systemd), so `bootstrap.sh` installs a weekly job —
+`/etc/cron.weekly/fstrim` (`fstrim --all`), fired by `cronie`+`anacron` (anacron
+also catches the job up if the box was off in Bazzite at the scheduled time). Do
+**not** use the `discard` mount option — periodic TRIM performs better. Verify:
+`lsblk --discard` (non-zero DISC-MAX) and `sudo fstrim -v /`.
 
-```sh
-sudo btrfs subvolume snapshot -r / /.snapshots/$(date +%F-%H%M)
-```
-Consider `snapper` or `btrbk` (both packaged) for automation + GRUB
-boot-into-snapshot. A failed update → boot a snapshot, investigate, retry.
+## Save points & rollback (no snapshots — by design)
+
+ext4 root means no boot-into-snapshot. That's intentional; your safety net is layered:
+
+1. **This git repo = the rebuild recipe.** Fresh disk → `docs/01` → `git clone`
+   → `./bootstrap.sh` → `chezmoi apply` and you're back. Commit the package
+   manifest whenever the box is stable (see below).
+2. **Cloud = your data backup** — whatever in `/home` you care about.
+3. **Previous kernel in the GRUB menu** — first defense for a bad kernel/DKMS bump.
+4. **`hrmpf` USB → `xchroot`** — repair packages / initramfs / GRUB in place.
+5. **Reinstall + `./bootstrap.sh` + `chezmoi apply`** — the repo *is* the recovery
+   image; a hosed userland is a ~20-min rebuild, not a disaster.
+6. **Bazzite on disk 1 is independent** — worst case, boot it and fix Void over a
+   chroot from there.
 
 ## NVIDIA + rolling kernel
 
@@ -41,7 +54,8 @@ boot-into-snapshot. A failed update → boot a snapshot, investigate, retry.
 - **`hrmpf`** — Void-based rescue ISO. `xchroot /mnt /bin/bash` to repair
   packages, regen initramfs, reinstall GRUB to disk 2's ESP. See `docs/01`.
 - Old kernel entry in GRUB — first line of defense for DKMS failures.
-- Btrfs snapshot — first line of defense for everything else.
+- Reinstall + `./bootstrap.sh` + `chezmoi apply` — the repo is your recovery image
+  (no snapshots; a hosed userland/FS is a quick rebuild, not a loss).
 - Bazzite is independent on disk 1 — worst case you boot Bazzite and fix Void
   over SSH/chroot from there.
 
@@ -63,3 +77,5 @@ Treat this repo as the source of truth: a dead disk → new disk, `docs/01`,
 - glibc/libxcrypt Jan 2024 incident: <https://voidlinux.org/news/2024/01/glibc-xcrypt.html>
 - XBPS handbook: <https://docs.voidlinux.org/xbps/index.html>
 - hrmpf: <https://github.com/leahneukirchen/hrmpf>
+- Void Handbook — SSDs / TRIM: <https://docs.voidlinux.org/config/ssd.html>
+- zramen: <https://github.com/atweiden/zramen>

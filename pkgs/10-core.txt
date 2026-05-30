@@ -4,3 +4,7 @@ git
 curl
 chrony
 firefox
+# cronie: cron daemon (+anacron) — fires the weekly fstrim TRIM job (docs/05).
+cronie
+# zramen: compressed-RAM swap manager (config: etc/sv/zramen/conf + sysctl).
+zramen

@@ -46,10 +46,17 @@ firmware boot menu**, not via anyone's GRUB.
    | Partition | Size | Type | Mount |
    |---|---|---|---|
    | p1 | 1 GiB | EFI System (vfat) | `/boot/efi` (Void's **own** ESP) |
-   | p2 | rest | **Btrfs** | `/` |
+   | p2 | rest | **ext4** | `/` |
    | p3 *(optional)* | as needed | ext4 | shared data (see §Shared data) |
 
-   Pick **Btrfs** for root — it's your only rollback path on Void (snapshots).
+   Pick **ext4** for root — best raw performance, zero snapshot upkeep. Important
+   data lives in the cloud; this repo + `bootstrap.sh` is your rebuild recipe (no
+   on-disk rollback — see `docs/05`). At the **filesystems** step just set p2 =
+   ext4, create = yes, mount = `/` — no manual chroot (a Btrfs subvolume layout
+   would have needed one). Do **not** add the `discard` mount option; TRIM runs
+   weekly via cron (`bootstrap.sh` sets it up). *(Optional: ext4 defaults to
+   `relatime`; switch the `/` line in `/etc/fstab` to `noatime` for a marginal
+   write reduction.)*
 6. **Bootloader step:** install GRUB to **disk 2**. With disk 1 disconnected
    this is the only option anyway. `void-installer` runs
    `grub-install --efi-directory=/boot/efi --bootloader-id=Void` into disk 2's
@@ -75,7 +82,7 @@ firmware boot menu**, not via anyone's GRUB.
 
 ## Shared data partition (optional)
 
-- Use **ext4** (or xfs), *not* NTFS, *not* a btrfs subvolume shared across distros.
+- Use **ext4** (or xfs), *not* NTFS, *not* a copy-on-write subvolume shared across distros.
 - Same primary user **UID/GID 1000** on both OSes (you set this above), then
   `chown -R 1000:1000` the mount.
 - Mount by `UUID=` in `/etc/fstab` on **both** sides.

@@ -100,6 +100,15 @@ else
   fi
 fi
 
+# --- 4c. SSD periodic TRIM + zram swap config -------------------------------
+# Drop these in BEFORE the service loop so the zramen service comes up with our
+# config. Weekly TRIM runs via cronie+anacron (no systemd fstrim.timer on Void).
+say "Installing weekly TRIM job + zram swap config"
+run "$SUDO install -Dm755 '$REPO_DIR/etc/cron.weekly/fstrim' /etc/cron.weekly/fstrim"
+run "$SUDO install -Dm644 '$REPO_DIR/etc/sv/zramen/conf'      /etc/sv/zramen/conf"
+run "$SUDO install -Dm644 '$REPO_DIR/etc/sysctl.d/99-zram.conf' /etc/sysctl.d/99-zram.conf"
+run "$SUDO sysctl --system >/dev/null 2>&1 || true"
+
 # --- 5. runit services ------------------------------------------------------
 # NOTE: elogind is deliberately NOT enabled as a runit service. On current Void
 # it is dbus-activated (org.freedesktop.login1) — symlinking /etc/sv/elogind on
