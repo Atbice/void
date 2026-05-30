@@ -132,16 +132,21 @@ for pair in \
   else warn "PipeWire example missing: $src (skipped — audio may need manual setup)"; fi
 done
 
-# --- 5c. Keyboard layout: Swedish -------------------------------------------
-# Three independent places need it: console TTYs (rc.conf), the Wayland/Plasma
-# session default (libxkbcommon via pam_env), and the SDDM greeter (set in
-# etc/sddm.conf.d/10-wayland.conf, since the greeter ignores /etc/environment).
-say "Setting keyboard layout to Swedish (console + Wayland session)"
+# --- 5c. Keyboard layout: Swedish (+ US secondary in the graphical session) -
+# Set in three independent places: console TTYs (rc.conf), the Wayland/Plasma
+# session default (libxkbcommon via pam_env /etc/environment), and the SDDM
+# greeter (etc/sddm.conf.d/10-wayland.conf, since the greeter ignores
+# /etc/environment). Console + greeter are Swedish-only; the session adds US.
+say "Setting keyboard layout (Swedish; +US secondary, Alt+Shift toggle, in session)"
 run "$SUDO sed -i '/^KEYMAP=/d' /etc/rc.conf"
 run "printf '%s\\n' 'KEYMAP=sv-latin1' | $SUDO tee -a /etc/rc.conf >/dev/null"
-if ! grep -q '^XKB_DEFAULT_LAYOUT=' /etc/environment 2>/dev/null; then
-  run "printf '%s\\n' 'XKB_DEFAULT_LAYOUT=se' | $SUDO tee -a /etc/environment >/dev/null"
-fi
+# Wayland/Plasma session: Swedish primary + US secondary, Alt+Shift to toggle.
+# Idempotent (drop any prior lines, re-append) so re-runs converge. The greeter
+# stays Swedish-only: SDDM's GreeterEnvironment is comma-separated, so a "se,us"
+# value can't be expressed there.
+run "$SUDO touch /etc/environment"
+run "$SUDO sed -i '/^XKB_DEFAULT_LAYOUT=/d;/^XKB_DEFAULT_OPTIONS=/d' /etc/environment"
+run "printf '%s\\n%s\\n' 'XKB_DEFAULT_LAYOUT=se,us' 'XKB_DEFAULT_OPTIONS=grp:alt_shift_toggle' | $SUDO tee -a /etc/environment >/dev/null"
 
 # --- 6. Steam-on-Void fixes (MANDATORY for native Steam) --------------------
 say "Applying mandatory Steam-on-Void fixes"

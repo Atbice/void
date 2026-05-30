@@ -66,20 +66,25 @@ sudo rm /etc/sddm.conf.d/10-wayland.conf
 sudo sv restart sddm
 ```
 
-### Keyboard layout (Swedish)
+### Keyboard layout (Swedish + US)
 
-`bootstrap.sh` sets Swedish in all three independent places, so you get `se`
-from the boot console through to the desktop:
+`bootstrap.sh` sets Swedish everywhere; the graphical **session** also gets US as
+a secondary layout, toggled with **Alt+Shift**:
 
-- **Console TTYs** — `KEYMAP=sv-latin1` in `/etc/rc.conf` (Void applies it at boot).
-- **Wayland/Plasma session** — `XKB_DEFAULT_LAYOUT=se` in `/etc/environment`
-  (kwin reads it via pam_env). On first login Plasma inherits this; once you set
-  layouts in *System Settings → Keyboard*, that per-user `kxkbrc` takes over.
-- **SDDM greeter** — `XKB_DEFAULT_LAYOUT=se` in the greeter's `GreeterEnvironment`
-  (`etc/sddm.conf.d/10-wayland.conf`).
+- **Console TTYs** — `KEYMAP=sv-latin1` in `/etc/rc.conf`. Single layout (the
+  Linux console can't toggle); Swedish only.
+- **Wayland/Plasma session** — `XKB_DEFAULT_LAYOUT=se,us` +
+  `XKB_DEFAULT_OPTIONS=grp:alt_shift_toggle` in `/etc/environment` (kwin reads
+  both via pam_env). Swedish primary, US secondary, **Alt+Shift** switches. On
+  first login Plasma inherits this; once you set layouts in *System Settings →
+  Keyboard*, that per-user `kxkbrc` takes over (set the switch shortcut there).
+- **SDDM greeter** — `XKB_DEFAULT_LAYOUT=se` in `GreeterEnvironment`
+  (`etc/sddm.conf.d/10-wayland.conf`). Swedish only — SDDM's `GreeterEnvironment`
+  is comma-separated, so a `se,us` value can't be expressed there (you only type
+  your password at the greeter anyway).
 
-To change it, swap `se` / `sv-latin1` in those three spots (or just pick a layout
-in System Settings for the running session).
+To adjust: edit those values (a different toggle e.g. `grp:alt_space_toggle`, or
+reorder `se,us`), or just configure layouts in System Settings for the session.
 
 ## runit services
 
