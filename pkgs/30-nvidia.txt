@@ -2,3 +2,7 @@
 # Requires void-repo-nonfree + void-repo-multilib-nonfree (bootstrap.sh adds them).
 nvidia
 nvidia-libs-32bit
+# vkcube / vulkaninfo for the README/docs GPU-verify step. Capital V-T is the
+# real Void package name; lowercase `vulkan-tools` does NOT exist (xbps is
+# case-sensitive).
+Vulkan-Tools

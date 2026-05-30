@@ -36,6 +36,11 @@ sudo xbps-install -S \
   elogind dbus polkit nvidia
 ```
 
+> Illustrative only. The authoritative, complete set is `pkgs/20-desktop.txt`
+> (which also has `flatpak`, `xdg-desktop-portal-gtk`, and the fonts) plus
+> `pkgs/30-nvidia.txt` (`nvidia`, `nvidia-libs-32bit`, `Vulkan-Tools`). Run
+> `bootstrap.sh` rather than copy-pasting this line.
+
 - `xorg-minimal` is still required: the default SDDM **greeter** runs on X
   (the Plasma *session* is Wayland regardless). It's small.
 - Enable PipeWire per the handbook (symlink the example
@@ -50,14 +55,35 @@ misbehaves, delete that file — the session stays Wayland either way.
 ## runit services
 
 ```sh
-sudo ln -s /etc/sv/dbus           /var/service/   # FIRST — SDDM/NM depend on it
+sudo ln -s /etc/sv/dbus           /var/service/
 sudo ln -s /etc/sv/NetworkManager /var/service/
-sudo ln -s /etc/sv/sddm           /var/service/   # LAST — after one interactive test
+sudo ln -s /etc/sv/sddm           /var/service/   # enable last to test the box first
 ```
 
-`elogind` on current Void is typically dbus/socket-activated with **no standalone
-`/etc/sv/elogind`** — bootstrap.sh enables it only if that service dir exists,
-and does not fail otherwise. Don't enable `dhcpcd` alongside NetworkManager.
+runit supervises services in **parallel** — symlink order does not set a boot
+order; each run script self-gates on its deps (Void's `NetworkManager`/`sddm` run
+scripts call `sv check dbus`). Enabling `sddm` last is just so you can verify the
+system before the greeter takes the VT.
+
+**Do NOT enable `elogind` as a runit service.** It ships `/etc/sv/elogind`, but on
+current Void it is **dbus-activated**: the `dbus` package is built
+`--enable-elogind`, and the elogind package installs a dbus activation file
+(`/usr/share/dbus-1/system-services/org.freedesktop.login1.service`,
+`Exec=…/elogind --daemon`). The first `org.freedesktop.login1` call — SDDM's
+`pam_elogind` or Plasma — auto-spawns elogind. If you *also* symlink
+`/etc/sv/elogind`, runit starts a **second** instance; the loser exits
+`elogind is already running as PID N` and runsv respawns it instantly — a tight
+loop that saturates the box (reproduced on a real VM: `sshd` died, Plasma never
+displayed). `bootstrap.sh` therefore omits elogind from `services.txt` and
+actively refuses to enable it. KDE-initiated **suspend** and the NVIDIA sleep
+hook still fire — they go KDE → `org.freedesktop.login1` `Suspend()` → the
+dbus-activated elogind → kernel sleep + `/usr/lib/elogind/system-sleep` hooks;
+no standalone service is needed. (The handbook's "enable its service if you have
+issues" remedy would *also* require neutering the dbus activation file so the two
+don't race — unnecessary complexity for this box.) The official KDE-on-Void page
+enables only `dbus`, `NetworkManager`, `sddm` — exactly our set.
+
+Don't enable `dhcpcd` alongside NetworkManager.
 
 ## Session selection & verification
 

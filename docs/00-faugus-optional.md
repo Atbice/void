@@ -10,28 +10,32 @@
 
 ## Why the source path is fragile on Void
 
-- Not in xbps (no `srcpkgs/faugus-launcher`) — meson/ninja source build.
-- `umu-launcher` (its runtime) is also not in xbps — separate source build
-  (Rust toolchain + git submodules).
-- `vdf` and `icoextract` are not in xbps **at all** — installed via
-  `pipx`/`pip`, outside the package manager. These break silently on Void
-  Python major bumps; you must remember to `pipx reinstall-all`.
+- `faugus-launcher` is not in xbps (no `srcpkgs/faugus-launcher`) — a meson/ninja
+  source build you maintain by hand.
+- `umu-launcher` (its runtime) is also not in xbps — a separate source build
+  (Rust toolchain + git submodules + a PEP517 Python build).
+- Updates are a manual `git` pull + rebuild, not `xbps-install -Su`.
+
+(Its Python deps `python3-vdf` and `python3-icoextract` **are** in xbps now, so
+the old pipx/pip workaround is gone — that part is no longer fragile.)
 
 The Flatpak has none of these problems (it bundles everything and updates with
 `flatpak update`).
 
 ## What `faugus.sh` does (only if you run it with `--faugus-src`)
 
-1. `xbps-install` the available build/runtime deps.
-2. `pipx install vdf icoextract` (the xbps gap — unmanaged).
-3. Build + install **umu-launcher** from source.
-4. Build + install **faugus-launcher** from source.
+1. `xbps-install` all build + runtime deps, including `python3-vdf` and
+   `python3-icoextract` (no pipx/pip) plus umu's PEP517 build backends
+   (`python3-build`, `python3-installer`, `hatchling`, `python3-setuptools`).
+2. Build + install **umu-launcher** from source.
+3. Build + install **faugus-launcher** from source.
 
 ## Maintenance you own forever (if you go this route)
 
-- After any Void Python major bump: `pipx reinstall-all` or Faugus won't start.
-- Faugus/umu updates are manual `git pull` + rebuild, not `xbps-install -Su`.
-- Not tracked by xbps; this repo's package lists won't capture it.
+- Faugus/umu updates are a manual `git pull` + rebuild (re-run the script), not
+  `xbps-install -Su`. Their xbps-provided deps DO update normally.
+- The umu/faugus binaries themselves aren't tracked by xbps; this repo's package
+  lists won't capture them.
 
 ## Sources
 

@@ -24,7 +24,7 @@ for a in "$@"; do
     --faugus-src)  DO_FAUGUS_SRC=1 ;;
     --no-update)   DO_UPDATE=0 ;;
     --dry-run)     DRY=1 ;;
-    -h|--help)     grep '^#' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
+    -h|--help)     awk 'NR==1{next} /^#/{sub(/^# ?/,"");print;next} {exit}' "$0"; exit 0 ;;
     *) echo "unknown arg: $a (see --help)" >&2; exit 2 ;;
   esac
 done
@@ -34,7 +34,8 @@ warn() { printf '\033[1;33m[!]\033[0m %s\n' "$*" >&2; }
 run()  { if [ "$DRY" = 1 ]; then printf '  [dry-run] %s\n' "$*"; else sh -c "$*"; fi; }
 
 # --- guard: Void only -------------------------------------------------------
-if [ ! -r /etc/os-release ] || ! grep -q '^ID=void' /etc/os-release; then
+# Void's /etc/os-release ships ID="void" (quoted) — match quoted OR unquoted.
+if [ ! -r /etc/os-release ] || ! grep -Eq '^ID="?void"?$' /etc/os-release; then
   echo "REFUSING: not Void Linux. Run this on the new Void box only." >&2
   exit 1
 fi
@@ -74,11 +75,18 @@ say "Regenerating initramfs (xbps-reconfigure -fa)"
 run "$SUDO xbps-reconfigure -fa"
 
 # --- 5. runit services ------------------------------------------------------
+# NOTE: elogind is deliberately NOT enabled as a runit service. On current Void
+# it is dbus-activated (org.freedesktop.login1) — symlinking /etc/sv/elogind on
+# top of that starts a second instance and produces an "elogind is already
+# running as PID N" runsv respawn loop that bricks the desktop. See services.txt.
+# The guard below refuses to enable it even if it gets re-added to services.txt.
 say "Enabling runit services"
 for s in $(pkglist "$REPO_DIR/services.txt"); do
-  if [ -e "/var/service/$s" ]; then echo "  $s already enabled"
+  if [ "$s" = elogind ]; then
+    warn "refusing to enable elogind as a runit service — it is dbus-activated on Void; a standalone service races it into an 'already running' respawn loop. Skipped."
+  elif [ -e "/var/service/$s" ]; then echo "  $s already enabled"
   elif [ -d "/etc/sv/$s" ]; then run "$SUDO ln -s /etc/sv/$s /var/service/"; echo "  enabled $s"
-  else warn "no /etc/sv/$s — skipped (e.g. elogind is dbus-activated on current Void)"; fi
+  else warn "no /etc/sv/$s — skipped (package not installed?)"; fi
 done
 
 # --- 6. Steam-on-Void fixes (MANDATORY for native Steam) --------------------
@@ -88,6 +96,12 @@ if [ ! -e /usr/lib64/gconv ] && [ -d /usr/lib/gconv ]; then
 else echo "  gconv: nothing to do"; fi
 run "printf '%s\\n' 'export GCONV_PATH=/usr/lib/gconv' | $SUDO tee /etc/profile.d/steam-void.sh >/dev/null"
 run "$SUDO chmod 644 /etc/profile.d/steam-void.sh"
+# belt-and-suspenders: also expose GCONV_PATH via pam_env (/etc/environment) so
+# it survives a session start that doesn't source /etc/profile. profile.d above
+# is the primary path; this is a no-op if it's already present.
+if ! grep -q '^GCONV_PATH=' /etc/environment 2>/dev/null; then
+  run "printf '%s\\n' 'GCONV_PATH=/usr/lib/gconv' | $SUDO tee -a /etc/environment >/dev/null"
+fi
 run "printf '%s\\n%s\\n' '* soft nofile 1048576' '* hard nofile 1048576' | $SUDO tee /etc/security/limits.d/steam.conf >/dev/null"
 run "$SUDO usermod -aG video,input '$TARGET_USER'"
 warn "Log out/in (or reboot) for group + nofile + GCONV_PATH changes to apply."

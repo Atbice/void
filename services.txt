@@ -1,8 +1,20 @@
 # runit services auto-enabled by bootstrap.sh (symlink /etc/sv/<n> -> /var/service/).
-# Order matters: dbus first, sddm last.
+# runit supervises in PARALLEL — enable order is cosmetic; each run script
+# self-gates on its deps (Void's NetworkManager/sddm run scripts do `sv check
+# dbus`). We list sddm last only so you can sanity-check the box before the
+# greeter grabs the VT.
 dbus
 NetworkManager
 sddm
-# elogind: on current Void it is usually dbus/socket-activated with NO standalone
-# /etc/sv/elogind. bootstrap.sh enables it ONLY if that service dir exists.
-elogind
+# elogind is INTENTIONALLY NOT listed. The elogind package ships /etc/sv/elogind
+# (via `vsv elogind`) AND a dbus activation file
+# (/usr/share/dbus-1/system-services/org.freedesktop.login1.service, Exec=elogind
+# --daemon). On Void, dbus is built --enable-elogind, so the first login1 call
+# (SDDM's pam_elogind / Plasma) auto-spawns elogind. If we ALSO symlink
+# /etc/sv/elogind, runit starts a SECOND instance; the loser exits "elogind is
+# already running as PID N" and runsv respawns it instantly -> tight loop that
+# saturates the box (reproduced on a real VM: sshd died, Plasma never displayed).
+# The two start paths are mutually exclusive; dbus-activation is the Void default
+# (the KDE handbook enables only dbus/NetworkManager/sddm). KDE-initiated suspend
+# and the NVIDIA sleep hook fire via the dbus-activated instance just the same.
+# Do NOT add elogind here without first neutralising the dbus activation file.

@@ -1,4 +1,4 @@
-# 03 — Gaming: native Steam + Lutris (no Flatpak)
+# 03 — Gaming: native Steam + Lutris + Flatpak Faugus
 
 Scope: games running instantly. Native Steam + Lutris, plus a thin Flatpak
 layer for apps not in xbps (notably Faugus). Steam itself stays native.
@@ -62,6 +62,11 @@ With Flatpak in the stack, Faugus is trivial and well-maintained:
 `io.github.Faugus.faugus-launcher`. `bootstrap.sh` installs it from Flathub
 (it's in `pkgs/flatpaks.txt`). It bundles UMU and auto-downloads GE-Proton —
 nothing to hand-build. Launch it from the application menu.
+
+> Note: the Faugus Flatpak is **community-maintained** (not Flathub-verified) and
+> ships a broad sandbox (`--device=all`, `--filesystem=home`, network/ipc, and
+> `--own-name=com.steampowered.*`). That breadth is normal for a launcher that
+> drives Steam/Proton, but install it knowing it isn't sandbox-isolated.
 
 Faugus and Lutris cover the same job (per-game Proton prefixes + GE-Proton);
 use whichever UI you prefer — both are installed.

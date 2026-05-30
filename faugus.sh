@@ -3,8 +3,9 @@
 # without Flatpak. READ docs/00-faugus-optional.md FIRST. Lutris (docs/03) is
 # the clean answer; this exists only if you specifically want Faugus's UI.
 #
-# This builds from source and uses pipx for two deps that are NOT in xbps
-# (vdf, icoextract). It is NOT tracked by xbps and will rot on Python upgrades.
+# Builds umu-launcher + faugus-launcher from source (meson/cargo). ALL deps —
+# including python3-vdf and python3-icoextract — now come from xbps; no pipx/pip.
+# umu/faugus themselves are source-built, so they update by re-running this.
 #
 # Usage: ./faugus.sh [--dry-run]
 set -eu
@@ -13,24 +14,23 @@ DRY=0; [ "${1:-}" = "--dry-run" ] && DRY=1
 run() { if [ "$DRY" = 1 ]; then printf '  [dry-run] %s\n' "$*"; else sh -c "$*"; fi; }
 say() { printf '\n\033[1;36m==>\033[0m %s\n' "$*"; }
 
-if [ ! -r /etc/os-release ] || ! grep -q '^ID=void' /etc/os-release; then
+# Void's /etc/os-release ships ID="void" (quoted) — match quoted OR unquoted.
+if [ ! -r /etc/os-release ] || ! grep -Eq '^ID="?void"?$' /etc/os-release; then
   echo "REFUSING: not Void Linux." >&2; exit 1
 fi
 SUDO=""; [ "$(id -u)" -ne 0 ] && SUDO="sudo"
 WORK="${TMPDIR:-/tmp}/faugus-build.$$"
+trap 'rm -rf "$WORK"' EXIT
 
 printf 'Faugus on Void is fragile (see docs/00). Continue? [y/N] '
 read -r ans; case "$ans" in y|Y) ;; *) echo "aborted."; exit 0 ;; esac
 
-say "Installing build + runtime deps available in xbps"
+say "Installing all build + runtime deps from xbps (no pipx/pip needed)"
 run "$SUDO xbps-install -Sy meson ninja git rust cargo scdoc \
   python3-gobject python3-cairo python3-Pillow python3-psutil \
-  python3-requests python3-pygame gtk+3 libayatana-appindicator \
-  libcanberra ImageMagick vulkan-tools pipx"
-
-say "Installing xbps-gap Python deps via pipx (NOT package-managed)"
-run "pipx install vdf || pip install --user vdf"
-run "pipx install icoextract || pip install --user icoextract"
+  python3-requests python3-pygame python3-vdf python3-icoextract \
+  python3-build python3-installer python3-setuptools hatchling \
+  gtk+3 libayatana-appindicator libcanberra ImageMagick Vulkan-Tools"
 
 say "Building umu-launcher from source"
 run "mkdir -p '$WORK'"
@@ -41,6 +41,5 @@ say "Building faugus-launcher from source"
 run "git clone https://github.com/Faugus/faugus-launcher '$WORK/faugus-launcher'"
 run "cd '$WORK/faugus-launcher' && meson setup builddir --prefix=/usr && ninja -C builddir && $SUDO ninja -C builddir install"
 
-run "rm -rf '$WORK'"
-say "Done. Reminder: after any Void Python major bump, run: pipx reinstall-all"
-echo "  (else vdf/icoextract import fails and Faugus won't start)."
+say "Done. python3-vdf/python3-icoextract are real xbps packages now, so they"
+echo "  update with 'sudo xbps-install -Su'. Re-run this script to update umu/faugus."
