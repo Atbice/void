@@ -63,6 +63,31 @@ firmware boot menu**, not via anyone's GRUB.
    ESP and adds a "Void" NVRAM entry. Disk 1 is never referenced.
 7. Finish, **power off**, **reconnect disk 1** (re-enable its port).
 
+### Installer choices (what to pick at each `void-installer` step)
+
+| Step | Pick |
+|---|---|
+| Keyboard | `sv-latin1` (Swedish) |
+| Network | Yes — ethernet is automatic; configure Wi-Fi here |
+| Source | **Network** + a close/fast mirror (gets current packages) |
+| Hostname | your choice |
+| Locale | default `LANG`: `en_US.UTF-8` (English UI) or `sv_SE.UTF-8` (Swedish UI). Keyboard ≠ UI language ≠ number/date formats — all independent |
+| Timezone | Europe/Stockholm |
+| Root password | strong |
+| User account | your user, **UID/GID 1000** (matches Bazzite for shared data), in `wheel` (= sudo) |
+| Bootloader | GRUB → **disk 2** |
+| Partition | GPT: p1 1 GiB EFI, p2 rest, (p3 optional ext4 data) |
+| Filesystems | p1 vfat → `/boot/efi`; p2 **ext4** → `/`. **No swap partition** (zram instead) |
+| Clock | **UTC** (don't set local RTC — it'd fight Bazzite) |
+
+Decide **before** the installer (not in the menu): boot the **glibc** ISO (not
+musl), **Secure Boot OFF**, **disk 1 disconnected**. The guided installer does
+**not** do LUKS/LVM — those need a manual install.
+
+> First boot: if `sudo` isn't enabled for `wheel` yet, run `bootstrap.sh` as root
+> (`su -`). `bootstrap.sh` then switches networking to NetworkManager and disables
+> the base install's `dhcpcd`.
+
 ## First boot & switching
 
 1. Power on, mash the firmware **one-time boot menu** key (X570/B550 boards:

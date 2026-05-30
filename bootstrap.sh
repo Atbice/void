@@ -198,6 +198,20 @@ if [ "$DO_FAUGUS_SRC" = 1 ]; then
   else sh "$REPO_DIR/faugus.sh"; fi
 fi
 
+# --- 7b. networking: NetworkManager owns it — disable the default dhcpcd -----
+# Void's base install enables dhcpcd; running it alongside NetworkManager makes
+# them fight over the interface. NM is enabled above. Done LAST so the network
+# stays up via dhcpcd through the update/install/flatpak steps.
+say "Finalizing networking (NetworkManager)"
+if [ "$DRY" = 1 ]; then
+  echo "  [dry-run] would disable dhcpcd if present (NetworkManager handles networking)"
+elif [ -e /var/service/NetworkManager ] && [ -e /var/service/dhcpcd ]; then
+  $SUDO rm -f /var/service/dhcpcd
+  echo "  disabled dhcpcd (NetworkManager handles networking)"
+else
+  echo "  dhcpcd: nothing to disable"
+fi
+
 # --- done -------------------------------------------------------------------
 say "Done."
 cat <<'EOF'

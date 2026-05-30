@@ -117,7 +117,9 @@ issues" remedy would *also* require neutering the dbus activation file so the tw
 don't race — unnecessary complexity for this box.) The official KDE-on-Void page
 enables only `dbus`, `NetworkManager`, `sddm` — exactly our set.
 
-Don't enable `dhcpcd` alongside NetworkManager.
+`bootstrap.sh` disables the base install's `dhcpcd` once NetworkManager is enabled
+— running both fights over the interface (it does this last, so the network stays
+up through the package/Flatpak steps).
 
 ## Session selection & verification
 
